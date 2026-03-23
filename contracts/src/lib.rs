@@ -1,5 +1,7 @@
 #![no_std]
 
+pub mod token;
+
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Env, String, Symbol};
 
 #[contracttype]
