@@ -53,6 +53,28 @@ web3-student-lab/
 └── docs/                 # Documentation and learning materials
 ```
 
+## 🐳 Getting Started with Docker
+
+The easiest way to set up the local development environment (backend and database) is using Docker Compose.
+
+### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Launching the Environment
+1. Clone the repository and navigate to the root directory.
+2. Run the following command:
+   ```bash
+   docker compose up --build
+   ```
+3. The backend will be available at `http://localhost:8080`.
+4. The PostgreSQL database will be accessible at `localhost:5432`.
+
+### Useful Commands
+- **Stop the environment**: `docker compose down`
+- **View logs**: `docker compose logs -f`
+- **Restart a specific service**: `docker compose restart backend`
+
 ## 🤝 Contributing
 
 We love our contributors! This project is being built for students, by students and open-source enthusiasts. 
