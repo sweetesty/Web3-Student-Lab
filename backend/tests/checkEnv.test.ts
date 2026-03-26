@@ -1,4 +1,11 @@
-import { validateEnvironment, EnvironmentValidationError, getEnvVar, isProduction, isDevelopment, isTest } from '../src/utils/checkEnv.js';
+import {
+  validateEnvironment,
+  EnvironmentValidationError,
+  getEnvVar,
+  isProduction,
+  isDevelopment,
+  isTest,
+} from '../src/utils/checkEnv.js';
 
 // Mock process.env
 const originalEnv = process.env;
@@ -30,7 +37,9 @@ describe('Environment Variable Guard', () => {
       process.env.NODE_ENV = 'development';
 
       expect(() => validateEnvironment()).toThrow(EnvironmentValidationError);
-      expect(() => validateEnvironment()).toThrow(/Missing required environment variable: DATABASE_URL/);
+      expect(() => validateEnvironment()).toThrow(
+        /Missing required environment variable: DATABASE_URL/
+      );
     });
 
     it('should throw error for missing JWT_SECRET', () => {
@@ -38,7 +47,9 @@ describe('Environment Variable Guard', () => {
       process.env.NODE_ENV = 'development';
 
       expect(() => validateEnvironment()).toThrow(EnvironmentValidationError);
-      expect(() => validateEnvironment()).toThrow(/Missing required environment variable: JWT_SECRET/);
+      expect(() => validateEnvironment()).toThrow(
+        /Missing required environment variable: JWT_SECRET/
+      );
     });
 
     it('should throw error for invalid JWT_SECRET (too short)', () => {
@@ -47,7 +58,9 @@ describe('Environment Variable Guard', () => {
       process.env.NODE_ENV = 'development';
 
       expect(() => validateEnvironment()).toThrow(EnvironmentValidationError);
-      expect(() => validateEnvironment()).toThrow(/Invalid value for environment variable: JWT_SECRET/);
+      expect(() => validateEnvironment()).toThrow(
+        /Invalid value for environment variable: JWT_SECRET/
+      );
     });
 
     it('should throw error for default JWT_SECRET value', () => {
@@ -56,7 +69,9 @@ describe('Environment Variable Guard', () => {
       process.env.NODE_ENV = 'development';
 
       expect(() => validateEnvironment()).toThrow(EnvironmentValidationError);
-      expect(() => validateEnvironment()).toThrow(/Invalid value for environment variable: JWT_SECRET/);
+      expect(() => validateEnvironment()).toThrow(
+        /Invalid value for environment variable: JWT_SECRET/
+      );
     });
 
     it('should throw error for invalid DATABASE_URL format', () => {
@@ -65,7 +80,9 @@ describe('Environment Variable Guard', () => {
       process.env.NODE_ENV = 'development';
 
       expect(() => validateEnvironment()).toThrow(EnvironmentValidationError);
-      expect(() => validateEnvironment()).toThrow(/Invalid value for environment variable: DATABASE_URL/);
+      expect(() => validateEnvironment()).toThrow(
+        /Invalid value for environment variable: DATABASE_URL/
+      );
     });
 
     it('should require production variables in production environment', () => {
@@ -75,7 +92,9 @@ describe('Environment Variable Guard', () => {
       // Missing production variables
 
       expect(() => validateEnvironment()).toThrow(EnvironmentValidationError);
-      expect(() => validateEnvironment()).toThrow(/Missing required environment variable: STELLAR_ISSUER_SECRET_KEY/);
+      expect(() => validateEnvironment()).toThrow(
+        /Missing required environment variable: STELLAR_ISSUER_SECRET_KEY/
+      );
     });
 
     it('should pass production validation with all required variables', () => {

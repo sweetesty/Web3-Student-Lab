@@ -5,10 +5,7 @@ import { z } from 'zod';
  * Validates the request body for user registration
  */
 export const registerSchema = z.object({
-  email: z
-    .string()
-    .email('Invalid email format')
-    .min(1, 'Email is required'),
+  email: z.string().email('Invalid email format').min(1, 'Email is required'),
   password: z
     .string()
     .min(6, 'Password must be at least 6 characters')
@@ -17,12 +14,18 @@ export const registerSchema = z.object({
     .string()
     .min(1, 'First name is required')
     .max(50, 'First name must be less than 50 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'First name can only contain letters, spaces, hyphens, and apostrophes'),
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      'First name can only contain letters, spaces, hyphens, and apostrophes'
+    ),
   lastName: z
     .string()
     .min(1, 'Last name is required')
     .max(50, 'Last name must be less than 50 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'Last name can only contain letters, spaces, hyphens, and apostrophes'),
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      'Last name can only contain letters, spaces, hyphens, and apostrophes'
+    ),
 });
 
 /**
@@ -30,13 +33,8 @@ export const registerSchema = z.object({
  * Validates the request body for user login
  */
 export const loginSchema = z.object({
-  email: z
-    .string()
-    .email('Invalid email format')
-    .min(1, 'Email is required'),
-  password: z
-    .string()
-    .min(1, 'Password is required'),
+  email: z.string().email('Invalid email format').min(1, 'Email is required'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 /**

@@ -24,12 +24,18 @@ impl CertificateContract {
 
         let cert = Certificate {
             symbol: symbol.clone(),
-            student,
-            course_name,
+            student: student.clone(),
+            course_name: course_name.clone(),
             issue_date,
         };
 
         env.storage().instance().set(&symbol, &cert);
+
+        // Emit Soroban Event
+        env.events().publish(
+            (Symbol::new(&env, "cert_issued"), symbol),
+            (student, course_name),
+        );
 
         cert
     }

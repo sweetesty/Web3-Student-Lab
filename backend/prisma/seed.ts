@@ -22,7 +22,8 @@ async function main() {
     create: {
       id: 'course-2',
       title: 'Stellar Blockchain Fundamentals',
-      description: 'Understand how the Stellar blockchain works, including assets, accounts, and trustlines.',
+      description:
+        'Understand how the Stellar blockchain works, including assets, accounts, and trustlines.',
       instructor: 'Web3 Academy',
       credits: 2,
     },

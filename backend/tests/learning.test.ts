@@ -143,7 +143,7 @@ describe('Learning Module Integration Tests', () => {
 
       // Count occurrences of lesson-1
       const occurrences = response.body.progress.completedLessons.filter(
-        (id: string) => id === lessonId,
+        (id: string) => id === lessonId
       ).length;
 
       expect(occurrences).toBe(1);

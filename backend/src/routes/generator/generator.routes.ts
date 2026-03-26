@@ -1,5 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { GeneratorService } from '../../generator/generator.service.js';
+import logger from '../../utils/logger.js';
 import { getRandomProjectIdea, mockProjectIdeas } from '../../generator/mockData.js';
 
 const router = Router();
@@ -24,13 +25,13 @@ router.post('/generate', async (req: Request, res: Response) => {
       const projectIdea = await generatorService.generateProjectIdea(theme, techStack, difficulty);
       res.json({ projectIdea });
     } catch (aiError) {
-      console.warn('AI generation failed, using mock data:', aiError);
+      logger.warn(`AI generation failed, using mock data: ${aiError}`);
       // Return a random mock project idea as fallback
       const projectIdea = getRandomProjectIdea();
       res.json({ projectIdea, fromMock: true });
     }
   } catch (error) {
-    console.error('Generator Route Error:', error);
+    logger.error(`Generator Route Error: ${error}`);
     res.status(500).json({ error: 'Failed to generate project idea' });
   }
 });

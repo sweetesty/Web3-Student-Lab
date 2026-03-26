@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const enrollment = enrollments.find(e => e.id === id);
+    const enrollment = enrollments.find((e) => e.id === id);
 
     if (!enrollment) {
       return res.status(404).json({ error: 'Enrollment not found' });
@@ -38,9 +38,9 @@ router.post('/', async (req, res) => {
     if (!studentId || !courseId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    
+
     // Auto-create an enrollment if it doesn't already exist
-    const existing = enrollments.find(e => e.studentId === studentId && e.courseId === courseId);
+    const existing = enrollments.find((e) => e.studentId === studentId && e.courseId === courseId);
     if (existing) {
       return res.status(200).json(existing);
     }
@@ -52,7 +52,7 @@ router.post('/', async (req, res) => {
       status: 'active',
       enrolledAt: new Date().toISOString(),
     };
-    
+
     enrollments.push(newEnrollment);
     res.status(201).json(newEnrollment);
   } catch (error) {
@@ -66,7 +66,7 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const index = enrollments.findIndex(e => e.id === id);
+    const index = enrollments.findIndex((e) => e.id === id);
     if (index === -1) {
       return res.status(404).json({ error: 'Enrollment not found' });
     }
@@ -82,7 +82,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    enrollments = enrollments.filter(e => e.id !== id);
+    enrollments = enrollments.filter((e) => e.id !== id);
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to unenroll student' });

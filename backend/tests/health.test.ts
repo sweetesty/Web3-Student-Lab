@@ -18,6 +18,15 @@ describe('Health Endpoint Integration Tests', () => {
       expect(response.body.message).toBe('Web3 Student Lab Backend is running');
     });
 
+    it('should return uptime and version', async () => {
+      const response = await request(app).get('/health');
+
+      expect(response.body).toHaveProperty('uptime');
+      expect(typeof response.body.uptime).toBe('number');
+      expect(response.body).toHaveProperty('version');
+      expect(response.body.version).toBe('1.0.0');
+    });
+
     it('should return JSON content type', async () => {
       const response = await request(app).get('/health');
 

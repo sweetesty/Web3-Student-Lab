@@ -24,7 +24,7 @@ const validateRating = (rating: number): void => {
  * Format a feedback database record into a response object
  */
 export const formatFeedbackResponse = (
-  feedback: FeedbackWithStudent | Feedback,
+  feedback: FeedbackWithStudent | Feedback
 ): FeedbackResponse => {
   const response: FeedbackResponse = {
     id: feedback.id,
@@ -53,7 +53,7 @@ export const formatFeedbackResponse = (
  */
 export const createFeedback = async (
   studentId: string,
-  data: CreateFeedbackRequest,
+  data: CreateFeedbackRequest
 ): Promise<FeedbackResponse> => {
   const { courseId, rating, review } = data;
 
@@ -159,7 +159,7 @@ export const getFeedbackByCourse = async (courseId: string): Promise<FeedbackRes
  */
 export const getFeedbackByStudentAndCourse = async (
   studentId: string,
-  courseId: string,
+  courseId: string
 ): Promise<FeedbackResponse | null> => {
   const feedback = await prisma.feedback.findUnique({
     where: {
@@ -193,7 +193,7 @@ export const getFeedbackByStudentAndCourse = async (
 export const updateFeedback = async (
   studentId: string,
   courseId: string,
-  data: UpdateFeedbackRequest,
+  data: UpdateFeedbackRequest
 ): Promise<FeedbackResponse> => {
   const { rating, review } = data;
 

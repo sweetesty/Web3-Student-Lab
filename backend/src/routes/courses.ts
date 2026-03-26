@@ -7,30 +7,33 @@ let courses = [
   {
     id: 'cm1yxxxx-intro',
     title: 'Introduction to Web3 and Stellar',
-    description: 'Learn the foundational concepts of blockchain technology, decentralized networks, and how the Stellar consensus protocol enables fast, low-cost cross-border payments.',
+    description:
+      'Learn the foundational concepts of blockchain technology, decentralized networks, and how the Stellar consensus protocol enables fast, low-cost cross-border payments.',
     instructor: 'Satoshi N.',
     credits: 3,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 'cm1yxxxx-soroban',
     title: 'Soroban Smart Contracts 101',
-    description: 'A deep dive into writing secure smart contracts on the Stellar network using Rust and the Soroban SDK. Execute state changes and build immutable modules.',
+    description:
+      'A deep dive into writing secure smart contracts on the Stellar network using Rust and the Soroban SDK. Execute state changes and build immutable modules.',
     instructor: 'Vitalik B.',
     credits: 5,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 'cm1yxxxx-defi',
     title: 'Decentralized Finance (DeFi) primitives',
-    description: 'Master the core primitives of DeFi including Liquidity Pools, Automated Market Makers (AMMs), and yield generation directly on-chain.',
+    description:
+      'Master the core primitives of DeFi including Liquidity Pools, Automated Market Makers (AMMs), and yield generation directly on-chain.',
     instructor: 'Hayden A.',
     credits: 4,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
+    updatedAt: new Date().toISOString(),
+  },
 ];
 
 // GET /api/courses - Get all courses
@@ -46,7 +49,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const course = courses.find(c => c.id === id);
+    const course = courses.find((c) => c.id === id);
 
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
@@ -74,9 +77,9 @@ router.post('/', async (req, res) => {
       instructor,
       credits: credits || 3,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    
+
     courses.push(newCourse);
     res.status(201).json(newCourse);
   } catch (error) {
@@ -90,14 +93,20 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { title, description, instructor, credits } = req.body;
 
-    const index = courses.findIndex(c => c.id === id);
+    const index = courses.findIndex((c) => c.id === id);
     if (index === -1) {
       return res.status(404).json({ error: 'Course not found' });
     }
 
     const targetCourse = courses[index];
     if (targetCourse) {
-      Object.assign(targetCourse, { title, description, instructor, credits, updatedAt: new Date().toISOString() });
+      Object.assign(targetCourse, {
+        title,
+        description,
+        instructor,
+        credits,
+        updatedAt: new Date().toISOString(),
+      });
     }
     res.json(targetCourse);
   } catch (error) {
@@ -109,7 +118,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    courses = courses.filter(c => c.id !== id);
+    courses = courses.filter((c) => c.id !== id);
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete course' });

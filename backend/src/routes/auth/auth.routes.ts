@@ -4,6 +4,7 @@ import { login, register } from '../../auth/auth.service.js';
 import { LoginRequest } from '../../auth/types.js';
 import { registerSchema } from '../../auth/validation.schemas.js';
 import { validateRequest } from '../../utils/validation.js';
+import logger from '../../utils/logger.js';
 
 const router = Router();
 
@@ -52,7 +53,7 @@ router.post('/login', async (req: Request, res: Response) => {
   } catch (error) {
     // Demo/Mock login fallback if database is unreachable
     if (email && password) {
-      console.warn('Database unreachable, using demo login fallback');
+      logger.warn('Database unreachable, using demo login fallback');
       res.json({
         token: 'mock-jwt-token-for-demo-purposes',
         user: {
@@ -60,7 +61,7 @@ router.post('/login', async (req: Request, res: Response) => {
           email: email,
           firstName: 'Demo',
           lastName: 'Student',
-        }
+        },
       });
       return;
     }

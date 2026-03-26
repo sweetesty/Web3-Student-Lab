@@ -1,3 +1,5 @@
+import logger from './logger.js';
+
 /**
  * Environment Variable Validation Utility
  * Ensures all required environment variables are present before application startup
@@ -182,16 +184,15 @@ export function validateEnvironment(): void {
       }
     }
 
-    console.log('✅ Environment variables validated successfully');
+    logger.info('✅ Environment variables validated successfully');
 
     // Log environment info (without sensitive data)
-    console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-    console.log(`🔌 Port: ${process.env.PORT}`);
-    console.log(`🌐 Stellar Network: ${process.env.STELLAR_NETWORK}`);
+    logger.info(`🌍 Environment: ${process.env.NODE_ENV}`);
+    logger.info(`🔌 Port: ${process.env.PORT}`);
+    logger.info(`🌐 Stellar Network: ${process.env.STELLAR_NETWORK}`);
   } catch (error) {
     if (error instanceof EnvironmentValidationError) {
-      console.error('❌ Environment Configuration Error:');
-      console.error(error.message);
+      logger.error(`❌ Environment Configuration Error: ${error.message}`);
       // Only exit if we're not in a test environment
       if (process.env.NODE_ENV !== 'test') {
         process.exit(1);
@@ -200,7 +201,7 @@ export function validateEnvironment(): void {
         throw error;
       }
     } else {
-      console.error('❌ Unexpected error during environment validation:', error);
+      logger.error(`❌ Unexpected error during environment validation: ${error}`);
       if (process.env.NODE_ENV !== 'test') {
         process.exit(1);
       } else {

@@ -18,7 +18,7 @@ declare global {
 export const authenticate = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
@@ -70,7 +70,7 @@ export const authenticate = async (
 export const optionalAuth = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;

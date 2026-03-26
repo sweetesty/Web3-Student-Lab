@@ -1,4 +1,5 @@
 import { getStudentAchievements } from '../blockchain/blockchain.service.js';
+import logger from '../utils/logger.js';
 import prisma from '../db/index.js';
 import { getStudentProgress } from '../routes/learning/learning.service.js';
 import { getTokenBalance } from '../token/token.service.js';
@@ -19,7 +20,7 @@ export const getStudentDashboard = async (studentId: string): Promise<StudentDas
       },
     });
   } catch (dbError) {
-    console.warn(`Database unreachable for student ${studentId}, using mock profile`);
+    logger.warn(`Database unreachable for student ${studentId}, using mock profile`);
   }
 
   if (!student) {
@@ -39,19 +40,19 @@ export const getStudentDashboard = async (studentId: string): Promise<StudentDas
           description: 'On-chain verified: 0x123...abc',
           date: new Date(),
           type: 'certificate',
-          hash: '0x1234567890abcdef'
-        }
+          hash: '0x1234567890abcdef',
+        },
       ],
       tokenBalance: {
         symbol: 'W3SL',
         balance: 50.5,
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
       },
       recentActivity: [
         'Joined Web3 Student Lab',
         'Completed Web3 Fundamentals',
-        'Earned 50 W3SL tokens'
-      ]
+        'Earned 50 W3SL tokens',
+      ],
     };
   }
 
@@ -120,7 +121,7 @@ export const getStats = async () => {
       verificationRate: '100%',
     };
   } catch (error) {
-    console.warn('Database unreachable, returning mock dashboard stats');
+    logger.warn('Database unreachable, returning mock dashboard stats');
     // Mock statistical data for 'Connection' verification
     return {
       coursesCount: 12,
