@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { coursesAPI, certificatesAPI, enrollmentsAPI, Course, Certificate, Enrollment } from '@/lib/api';
+import {
+  coursesAPI,
+  certificatesAPI,
+  enrollmentsAPI,
+  Course,
+  Certificate,
+  Enrollment,
+} from '@/lib/api';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -78,8 +85,12 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-6">
               <div className="hidden md:flex flex-col items-end">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Active Operator</span>
-                <span className="text-sm font-mono text-gray-300">{user?.name || 'Unknown Entity'}</span>
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                  Active Operator
+                </span>
+                <span className="text-sm font-mono text-gray-300">
+                  {user?.name || 'Unknown Entity'}
+                </span>
               </div>
               <button
                 onClick={logout}
@@ -100,7 +111,9 @@ export default function DashboardPage() {
             Terminal <span className="text-gray-500">Access Granted</span>
           </h2>
           <p className="text-gray-400 font-light text-lg tracking-wide">
-            Operator <span className="text-white font-mono">{user?.name?.split(' ')[0] || 'Student'}</span> — Metrics and module connections active.
+            Operator{' '}
+            <span className="text-white font-mono">{user?.name?.split(' ')[0] || 'Student'}</span> —
+            Metrics and module connections active.
           </p>
         </div>
 
@@ -110,52 +123,100 @@ export default function DashboardPage() {
             <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-3xl group-hover:bg-red-500/10 transition-colors"></div>
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-black border border-white/10 rounded-xl flex items-center justify-center group-hover:border-white/30 transition-colors">
-                <svg className="w-6 h-6 text-white group-hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                <svg
+                  className="w-6 h-6 text-white group-hover:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                  />
                 </svg>
               </div>
               <p className="text-3xl font-black text-white font-mono">{stats.totalCourses}</p>
             </div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">Available Nodes</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">
+              Available Nodes
+            </p>
           </div>
 
           <div className="bg-zinc-950 border border-white/10 rounded-2xl p-6 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.1)] transition-all group relative overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-3xl group-hover:bg-red-500/10 transition-colors"></div>
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-black border border-white/10 rounded-xl flex items-center justify-center group-hover:border-white/30 transition-colors">
-                <svg className="w-6 h-6 text-white group-hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-6 h-6 text-white group-hover:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </div>
               <p className="text-3xl font-black text-white font-mono">{stats.enrolledCourses}</p>
             </div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">Active Uplinks</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">
+              Active Uplinks
+            </p>
           </div>
 
           <div className="bg-zinc-950 border border-white/10 rounded-2xl p-6 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.1)] transition-all group relative overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-3xl group-hover:bg-red-500/10 transition-colors"></div>
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-black border border-white/10 rounded-xl flex items-center justify-center group-hover:border-white/30 transition-colors">
-                 <svg className="w-6 h-6 text-white group-hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                <svg
+                  className="w-6 h-6 text-white group-hover:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                  />
                 </svg>
               </div>
               <p className="text-3xl font-black text-white font-mono">{stats.completedCourses}</p>
             </div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">Executed Modules</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">
+              Executed Modules
+            </p>
           </div>
 
           <div className="bg-zinc-950 border border-white/10 rounded-2xl p-6 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.1)] transition-all group relative overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-3xl group-hover:bg-red-500/10 transition-colors"></div>
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-black border border-white/10 rounded-xl flex items-center justify-center group-hover:border-white/30 transition-colors">
-                <svg className="w-6 h-6 text-white group-hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                <svg
+                  className="w-6 h-6 text-white group-hover:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                  />
                 </svg>
               </div>
               <p className="text-3xl font-black text-white font-mono">{stats.certificates}</p>
             </div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">Cryptographic Tokens</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">
+              Cryptographic Tokens
+            </p>
           </div>
         </div>
 
@@ -165,8 +226,12 @@ export default function DashboardPage() {
             <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center gap-3">
               <span className="w-4 h-4 bg-red-600 rounded-sm inline-block"></span> Directory Nodes
             </h3>
-            <Link href="/courses" className="text-gray-400 hover:text-white uppercase text-xs font-bold tracking-widest transition-colors flex items-center gap-1 group">
-              Scan All <span className="transform group-hover:translate-x-1 transition-transform">→</span>
+            <Link
+              href="/courses"
+              className="text-gray-400 hover:text-white uppercase text-xs font-bold tracking-widest transition-colors flex items-center gap-1 group"
+            >
+              Scan All{' '}
+              <span className="transform group-hover:translate-x-1 transition-transform">→</span>
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -177,10 +242,16 @@ export default function DashboardPage() {
                 className="bg-zinc-950 border border-white/5 p-8 hover:border-red-500/30 hover:bg-zinc-900 transition-all block group relative"
               >
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-red-600 transition-colors"></div>
-                <h4 className="text-xl font-black text-white mb-3 uppercase tracking-tight group-hover:text-red-50">{course.title}</h4>
-                <p className="text-gray-400 font-light text-sm mb-6 line-clamp-2">{course.description || 'System metadata missing'}</p>
+                <h4 className="text-xl font-black text-white mb-3 uppercase tracking-tight group-hover:text-red-50">
+                  {course.title}
+                </h4>
+                <p className="text-gray-400 font-light text-sm mb-6 line-clamp-2">
+                  {course.description || 'System metadata missing'}
+                </p>
                 <div className="flex justify-between items-center pt-6 border-t border-white/5">
-                  <span className="text-xs font-mono text-gray-500 px-2 py-1 bg-black border border-white/10 rounded">{course.credits} UNIT</span>
+                  <span className="text-xs font-mono text-gray-500 px-2 py-1 bg-black border border-white/10 rounded">
+                    {course.credits} UNIT
+                  </span>
                   <span className="text-xs font-bold text-red-500 uppercase tracking-widest group-hover:text-red-400">
                     Connect
                   </span>
@@ -195,10 +266,15 @@ export default function DashboardPage() {
           <div>
             <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
               <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center gap-3">
-                <span className="w-4 h-4 bg-red-600 rounded-sm inline-block"></span> Issued Credentials
+                <span className="w-4 h-4 bg-red-600 rounded-sm inline-block"></span> Issued
+                Credentials
               </h3>
-              <Link href="/certificates" className="text-gray-400 hover:text-white uppercase text-xs font-bold tracking-widest transition-colors flex items-center gap-1 group">
-                Vault <span className="transform group-hover:translate-x-1 transition-transform">→</span>
+              <Link
+                href="/certificates"
+                className="text-gray-400 hover:text-white uppercase text-xs font-bold tracking-widest transition-colors flex items-center gap-1 group"
+              >
+                Vault{' '}
+                <span className="transform group-hover:translate-x-1 transition-transform">→</span>
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -211,15 +287,27 @@ export default function DashboardPage() {
                   <div className="absolute top-0 right-0 w-32 h-32 bg-red-900/10 rounded-bl-full pointer-events-none group-hover:bg-red-900/20 transition-colors"></div>
                   <div className="flex items-start justify-between mb-6 relative z-10">
                     <div className="w-12 h-12 bg-zinc-950 border border-red-500/30 rounded-xl flex items-center justify-center">
-                      <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      <svg
+                        className="w-6 h-6 text-red-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                        />
                       </svg>
                     </div>
                     <span className="text-xs font-mono bg-zinc-950 border border-white/10 text-gray-400 px-3 py-1 rounded">
                       {new Date(cert.issuedAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <h4 className="text-xl font-bold text-white mb-2 uppercase tracking-wide group-hover:text-red-100">{cert.course?.title || 'Soroban Protocol'}</h4>
+                  <h4 className="text-xl font-bold text-white mb-2 uppercase tracking-wide group-hover:text-red-100">
+                    {cert.course?.title || 'Soroban Protocol'}
+                  </h4>
                   <p className="text-sm font-light text-red-500/80">On-Chain Certification</p>
                 </Link>
               ))}
@@ -229,5 +317,4 @@ export default function DashboardPage() {
       </main>
     </div>
   );
-
 }

@@ -64,16 +64,24 @@ export default function RegisterPage() {
       <div className="relative z-10 max-w-lg w-full bg-zinc-950 border border-white/10 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] p-8">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-red-600 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_15px_rgba(220,38,38,0.5)] transform -rotate-6">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
             </svg>
           </div>
           <h1 className="text-3xl font-black text-white mb-2 tracking-wide uppercase">
             Initialize <span className="text-red-600">Node</span>
           </h1>
-          <p className="text-gray-400 font-medium">
-            Join the decentralized education protocol
-          </p>
+          <p className="text-gray-400 font-medium">Join the decentralized education protocol</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -85,7 +93,10 @@ export default function RegisterPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="firstName" className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+              <label
+                htmlFor="firstName"
+                className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider"
+              >
                 First Name
               </label>
               <input
@@ -100,7 +111,10 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label htmlFor="lastName" className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+              <label
+                htmlFor="lastName"
+                className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider"
+              >
                 Last Name
               </label>
               <input
@@ -117,7 +131,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+            <label
+              htmlFor="email"
+              className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider"
+            >
               Network ID (Email)
             </label>
             <input
@@ -133,7 +150,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+            <label
+              htmlFor="password"
+              className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider"
+            >
               Passphrase
             </label>
             <input
@@ -149,7 +169,10 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider"
+            >
               Confirm Passphrase
             </label>
             <input
@@ -180,7 +203,10 @@ export default function RegisterPage() {
         <div className="mt-8 text-center border-t border-white/10 pt-6">
           <p className="text-gray-400">
             Node already initialized?{' '}
-            <Link href="/auth/login" className="text-red-500 hover:text-red-400 font-bold tracking-wide uppercase">
+            <Link
+              href="/auth/login"
+              className="text-red-500 hover:text-red-400 font-bold tracking-wide uppercase"
+            >
               Connect Session
             </Link>
           </p>

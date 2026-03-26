@@ -5,23 +5,27 @@ A modern, responsive frontend for the Web3 Student Lab platform built with Next.
 ## Features
 
 ### 🎓 Learning Platform
+
 - **Course Catalog** - Browse and search available blockchain courses
 - **Course Details** - View detailed course information and enroll
 - **Student Dashboard** - Track progress, enrolled courses, and certificates
 - **Enrollment System** - One-click enrollment in courses
 
 ### 🔐 Authentication
+
 - **User Registration** - Create new student accounts
 - **Login/Logout** - Secure JWT-based authentication
 - **Session Management** - Persistent login sessions with automatic token refresh
 - **Protected Routes** - Authenticated-only access to dashboard and courses
 
 ### 🏆 Blockchain Integration
+
 - **Certificate Verification** - Verify certificates on Soroban/Stellar blockchain
 - **On-Chain Credentials** - Tamper-proof certificate storage
 - **Real-time Verification** - Instant blockchain lookup and validation
 
 ### 🎨 User Interface
+
 - **Responsive Design** - Mobile-first design that works on all devices
 - **Dark Mode** - Automatic dark mode support based on system preferences
 - **Modern UI** - Clean, professional interface with smooth animations
@@ -76,16 +80,19 @@ frontend/
 ### Installation
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Create `.env.local` file:
+
 ```bash
 cp .env.local.example .env.local
 ```
 
 3. Configure environment variables:
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
 NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-test.stellar.org:443
@@ -95,6 +102,7 @@ NEXT_PUBLIC_CERTIFICATE_CONTRACT_ID=your_contract_id_here
 ### Development
 
 Run the development server:
+
 ```bash
 npm run dev
 ```
@@ -104,6 +112,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ### Build & Production
 
 Build for production:
+
 ```bash
 npm run build
 npm start
@@ -150,6 +159,7 @@ const cert = await verifyCertificateOnChain('CERTIFICATE_SYMBOL');
 ```
 
 **Note**: Full blockchain integration requires:
+
 1. Deployed Soroban contract on Stellar network
 2. Contract ID configured in environment variables
 3. Soroban RPC endpoint access
@@ -172,7 +182,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 function MyComponent() {
   const { user, isAuthenticated, logout } = useAuth();
-  
+
   return <div>Welcome, {user?.name}!</div>;
 }
 ```
@@ -188,6 +198,7 @@ Built with Tailwind CSS utility classes:
 ```
 
 Features:
+
 - Dark mode support via `dark:` variants
 - Responsive breakpoints: `sm:`, `md:`, `lg:`
 - Custom color palette
@@ -207,6 +218,7 @@ MIT License - see LICENSE file for details
 ## Support
 
 For issues or questions:
+
 - Check the documentation
 - Open an issue on GitHub
 - Contact the development team

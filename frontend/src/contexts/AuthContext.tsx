@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
-          
+
           // Verify token is still valid
           const currentUser = await authAPI.getCurrentUser();
           if (!currentUser) {
@@ -59,10 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       const response = await authAPI.login({ email, password });
-      
+
       setUser(response.user);
       setToken(response.token);
-      
+
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
     } catch (err: unknown) {
@@ -76,10 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       const response = await authAPI.register({ email, password, firstName, lastName });
-      
+
       setUser(response.user);
       setToken(response.token);
-      
+
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
     } catch (err: unknown) {

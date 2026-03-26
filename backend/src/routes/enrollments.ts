@@ -2,8 +2,15 @@ import { Router } from 'express';
 
 const router = Router();
 
+interface Enrollment {
+  id: string;
+  studentId: string;
+  courseId: string;
+  enrolledAt: string;
+}
+
 // Robust Mock Database for 100% Demo Uptime
-let enrollments: any[] = [];
+let enrollments: Enrollment[] = [];
 
 // GET /api/enrollments - Get all enrollments
 router.get('/', async (req, res) => {

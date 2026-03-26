@@ -1,6 +1,7 @@
 import { Address, StrKey, rpc, Contract, xdr, scValToNative } from '@stellar/stellar-sdk';
 
-const SOROBAN_RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-test.stellar.org:443';
+const SOROBAN_RPC_URL =
+  process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-test.stellar.org:443';
 const CERTIFICATE_CONTRACT_ID = process.env.NEXT_PUBLIC_CERTIFICATE_CONTRACT_ID || '';
 
 export interface CertificateData {
@@ -13,9 +14,7 @@ export interface CertificateData {
 /**
  * Verify a certificate on the Soroban blockchain
  */
-export const verifyCertificateOnChain = async (
-  symbol: string
-): Promise<CertificateData | null> => {
+export const verifyCertificateOnChain = async (symbol: string): Promise<CertificateData | null> => {
   try {
     if (!CERTIFICATE_CONTRACT_ID) {
       console.warn('Certificate contract ID not configured');
@@ -31,13 +30,13 @@ export const verifyCertificateOnChain = async (
     // Simulate the contract call (read-only)
     const simulation = await server.getHealth(); // Check health first
     if (simulation.status !== 'healthy') {
-        throw new Error('Soroban RPC is not healthy');
+      throw new Error('Soroban RPC is not healthy');
     }
 
     // Call the contract
     const result = await server.simulateTransaction(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        new Contract(CERTIFICATE_CONTRACT_ID).call('get_certificate', ...args) as any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      new Contract(CERTIFICATE_CONTRACT_ID).call('get_certificate', ...args) as any
     );
 
     if (rpc.Api.isSimulationSuccess(result)) {
@@ -52,7 +51,7 @@ export const verifyCertificateOnChain = async (
         };
       }
     }
-    
+
     return null;
   } catch (error) {
     console.error('Error verifying certificate on-chain:', error);
@@ -77,14 +76,14 @@ export const issueCertificateOnChain = async (
     }
 
     console.log('Issuing certificate:', { symbol, student, courseName });
-    
+
     // TODO: Implement actual certificate issuance
     // This requires:
     // 1. Building the contract call transaction
     // 2. Getting it signed by the wallet
     // 3. Submitting to the network
     // 4. Waiting for confirmation
-    
+
     return 'transaction_hash_placeholder';
   } catch (error) {
     console.error('Error issuing certificate on-chain:', error);

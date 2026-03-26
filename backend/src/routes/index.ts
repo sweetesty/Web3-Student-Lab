@@ -25,7 +25,7 @@ router.use('/generator', generatorRoutes);
 router.use('/user', userRouter);
 
 // Placeholder routes for future features
-router.use('/blockchain', (req: any, res: any) => {
+router.use('/blockchain', (_req, res) => {
   res.json({ message: 'Blockchain feature - Full integration in progress' });
 });
 

@@ -33,7 +33,8 @@ export default function LoginPage() {
       await login(formData.email, formData.password);
       router.push('/dashboard');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
+      const message =
+        err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
       setLocalError(message);
     } finally {
       setIsSubmitting(false);
@@ -48,16 +49,24 @@ export default function LoginPage() {
       <div className="relative z-10 max-w-md w-full bg-zinc-950 border border-white/10 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] p-8">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-red-600 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_15px_rgba(220,38,38,0.5)] transform -rotate-6">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
             </svg>
           </div>
           <h1 className="text-3xl font-black text-white mb-2 tracking-wide uppercase">
             Initialize <span className="text-red-600">Session</span>
           </h1>
-          <p className="text-gray-400 font-medium">
-            Access your secure Web3 learning node
-          </p>
+          <p className="text-gray-400 font-medium">Access your secure Web3 learning node</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -68,7 +77,10 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">
+            <label
+              htmlFor="email"
+              className="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider"
+            >
               Network ID (Email)
             </label>
             <input
@@ -85,10 +97,16 @@ export default function LoginPage() {
 
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label htmlFor="password" className="block text-sm font-bold text-gray-300 uppercase tracking-wider">
+              <label
+                htmlFor="password"
+                className="block text-sm font-bold text-gray-300 uppercase tracking-wider"
+              >
                 Passphrase
               </label>
-              <a href="#" className="text-xs font-bold text-red-500 hover:text-red-400 transition-colors">
+              <a
+                href="#"
+                className="text-xs font-bold text-red-500 hover:text-red-400 transition-colors"
+              >
                 Recover Key?
               </a>
             </div>
@@ -120,7 +138,10 @@ export default function LoginPage() {
         <div className="mt-8 text-center border-t border-white/10 pt-6">
           <p className="text-gray-400">
             Node uninitialized?{' '}
-            <Link href="/auth/register" className="text-red-500 hover:text-red-400 font-bold tracking-wide uppercase">
+            <Link
+              href="/auth/register"
+              className="text-red-500 hover:text-red-400 font-bold tracking-wide uppercase"
+            >
               Register here
             </Link>
           </p>

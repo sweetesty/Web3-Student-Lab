@@ -3,13 +3,13 @@ import { z } from 'zod';
 import { validateRequest } from '../src/utils/validation.js';
 
 // Mock Express objects
-const mockRequest = (body: any) =>
+const mockRequest = (body: Record<string, unknown>) =>
   ({
     body,
-  }) as Request;
+  }) as unknown as Request;
 
 const mockResponse = () => {
-  const res: any = {};
+  const res: Record<string, jest.Mock> = {};
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
   return res;
@@ -72,6 +72,7 @@ describe('Validation Middleware', () => {
     it('should return 500 error for unexpected errors', () => {
       const req = mockRequest({});
       const res = mockResponse();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const middleware = validateRequest(null as any);
 
       middleware(req, res, mockNext);

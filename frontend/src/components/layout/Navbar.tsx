@@ -25,13 +25,22 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          
           {/* Logo */}
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300 shadow-[0_0_15px_rgba(220,38,38,0.5)]">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                  />
                 </svg>
               </div>
               <span className="text-2xl font-black text-white tracking-widest uppercase">
@@ -39,7 +48,7 @@ export default function Navbar() {
               </span>
             </Link>
           </div>
-          
+
           {/* Desktop Navigation */}
           <div className="hidden xl:flex items-center gap-6">
             {navLinks.map((link) => (
@@ -56,13 +65,13 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-             {user ? (
+            {user ? (
               <div className="flex items-center gap-4">
                 <Link
                   href="/dashboard"
                   className={`text-[10px] font-black tracking-[0.2em] px-4 py-2 border rounded transition-all uppercase ${
-                    isActive('/dashboard') 
-                      ? 'bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' 
+                    isActive('/dashboard')
+                      ? 'bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]'
                       : 'border-white/10 text-gray-400 hover:text-white hover:border-red-500/50'
                   }`}
                 >
@@ -71,8 +80,8 @@ export default function Navbar() {
                 <Link
                   href="/certificates"
                   className={`text-[10px] font-black tracking-[0.2em] px-4 py-2 border rounded transition-all uppercase ${
-                    isActive('/certificates') 
-                      ? 'bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' 
+                    isActive('/certificates')
+                      ? 'bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]'
                       : 'border-white/10 text-gray-400 hover:text-white hover:border-red-500/50'
                   }`}
                 >
@@ -83,9 +92,19 @@ export default function Navbar() {
                   className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center hover:border-red-500/50 transition-colors group"
                   title="Logout"
                 >
-                   <svg className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                   </svg>
+                  <svg
+                    className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
                 </button>
               </div>
             ) : (
@@ -114,9 +133,19 @@ export default function Navbar() {
             >
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 )}
               </svg>
             </button>
@@ -133,7 +162,9 @@ export default function Navbar() {
               href={link.path}
               onClick={() => setIsMobileMenuOpen(false)}
               className={`block px-3 py-3 text-sm font-black tracking-widest uppercase rounded-md transition-colors ${
-                isActive(link.path) ? 'bg-red-500/10 text-red-500' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                isActive(link.path)
+                  ? 'bg-red-500/10 text-red-500'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
               {link.name}
@@ -150,7 +181,10 @@ export default function Navbar() {
                 Dashboard
               </Link>
               <button
-                onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                onClick={() => {
+                  logout();
+                  setIsMobileMenuOpen(false);
+                }}
                 className="block w-full text-left px-3 py-3 text-sm font-black tracking-widest text-red-500 uppercase hover:bg-red-500/10 rounded-md"
               >
                 Logout

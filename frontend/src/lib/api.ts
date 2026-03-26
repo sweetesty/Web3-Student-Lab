@@ -169,7 +169,11 @@ export interface FeedbackSummary {
 }
 
 export const feedbackAPI = {
-  submit: async (data: { courseId: string; rating: number; review?: string }): Promise<Feedback> => {
+  submit: async (data: {
+    courseId: string;
+    rating: number;
+    review?: string;
+  }): Promise<Feedback> => {
     const response = await apiClient.post('/feedback', data);
     return response.data;
   },

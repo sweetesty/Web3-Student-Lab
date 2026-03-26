@@ -13,7 +13,10 @@ export default function CertificateNFTPage() {
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<{ verified: boolean; hash?: string } | null>(null);
+  const [verificationResult, setVerificationResult] = useState<{
+    verified: boolean;
+    hash?: string;
+  } | null>(null);
 
   useEffect(() => {
     async function loadCertificate() {
@@ -50,7 +53,9 @@ export default function CertificateNFTPage() {
       <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-black">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-red-600/30 border-t-red-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-red-500 font-mono uppercase tracking-widest text-sm">Decoding Token Asset...</p>
+          <p className="text-red-500 font-mono uppercase tracking-widest text-sm">
+            Decoding Token Asset...
+          </p>
         </div>
       </div>
     );
@@ -64,46 +69,79 @@ export default function CertificateNFTPage() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-red-600/10 rounded-full blur-[150px] pointer-events-none"></div>
 
       <div className="max-w-5xl mx-auto relative z-10 flex flex-col lg:flex-row gap-12 items-center lg:items-start">
-        
         {/* NFT Asset Card Column */}
         <div className="w-full lg:w-1/2 flex justify-center">
           <div className="relative group perspective-1000 w-full max-w-sm">
             {/* Ambient Card Glow */}
             <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-red-900 rounded-[2rem] blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
-            
+
             {/* The Asset Itself */}
             <div className="relative bg-zinc-950 border border-white/20 rounded-[2rem] p-8 aspect-[3/4] flex flex-col justify-between shadow-2xl transform transition-transform duration-500 hover:scale-[1.02]">
               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 contrast-150 rounded-[2rem] mix-blend-overlay pointer-events-none"></div>
-              
+
               <div className="relative z-10 flex justify-between items-start">
                 <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.5)]">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-mono text-red-400 uppercase tracking-widest leading-tight">Testnet</p>
-                  <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest leading-tight">Soroban</p>
+                  <p className="text-[10px] font-mono text-red-400 uppercase tracking-widest leading-tight">
+                    Testnet
+                  </p>
+                  <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest leading-tight">
+                    Soroban
+                  </p>
                 </div>
               </div>
 
               <div className="relative z-10 text-center my-8">
                 <div className="inline-block p-4 rounded-full bg-black border border-white/10 shadow-inner mb-6">
-                  <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  <svg
+                    className="w-16 h-16 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1}
+                      d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-2">Web3 Lab</h3>
-                <h4 className="text-sm font-bold text-red-500 uppercase tracking-widest">Op. Credential</h4>
+                <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-2">
+                  Web3 Lab
+                </h3>
+                <h4 className="text-sm font-bold text-red-500 uppercase tracking-widest">
+                  Op. Credential
+                </h4>
               </div>
 
               <div className="relative z-10 border-t border-white/10 pt-4 flex justify-between items-end">
                 <div>
-                  <p className="text-[9px] font-mono text-gray-500 uppercase tracking-widest mb-1">Holder Identity</p>
+                  <p className="text-[9px] font-mono text-gray-500 uppercase tracking-widest mb-1">
+                    Holder Identity
+                  </p>
                   <p className="text-xs font-bold text-white uppercase tracking-wider truncate max-w-[150px]">
                     {certificate.student?.name || 'Unknown Operator'}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] font-mono text-gray-500 uppercase tracking-widest mb-1">Mint Date</p>
+                  <p className="text-[9px] font-mono text-gray-500 uppercase tracking-widest mb-1">
+                    Mint Date
+                  </p>
                   <p className="text-xs font-mono text-white tracking-widest">
                     {new Date(certificate.issuedAt).toLocaleDateString()}
                   </p>
@@ -116,21 +154,30 @@ export default function CertificateNFTPage() {
         {/* Info Column */}
         <div className="w-full lg:w-1/2 space-y-8">
           <div>
-            <Link href="/certificates" className="text-gray-500 hover:text-red-500 uppercase text-xs font-bold tracking-widest mb-6 inline-flex items-center gap-2 group transition-colors">
-              <span className="transform group-hover:-translate-x-1 transition-transform">←</span> Back to Vault
+            <Link
+              href="/certificates"
+              className="text-gray-500 hover:text-red-500 uppercase text-xs font-bold tracking-widest mb-6 inline-flex items-center gap-2 group transition-colors"
+            >
+              <span className="transform group-hover:-translate-x-1 transition-transform">←</span>{' '}
+              Back to Vault
             </Link>
             <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight mb-2">
               {certificate.course?.title || 'Unknown Protocol'}
             </h1>
-            <p className="text-red-500 font-mono tracking-widest uppercase text-sm mb-6">Non-Fungible Certification</p>
+            <p className="text-red-500 font-mono tracking-widest uppercase text-sm mb-6">
+              Non-Fungible Certification
+            </p>
             <p className="text-gray-400 font-light text-lg">
-              This cryptographic token proves execution and mastery of the linked learning module. It exists immutably on the Stellar blockchain network.
+              This cryptographic token proves execution and mastery of the linked learning module.
+              It exists immutably on the Stellar blockchain network.
             </p>
           </div>
 
           <div className="bg-zinc-950 border border-white/10 rounded-2xl p-6 shadow-xl">
-            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6 border-b border-white/10 pb-4">Token Metadata</h3>
-            
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6 border-b border-white/10 pb-4">
+              Token Metadata
+            </h3>
+
             <div className="space-y-4 font-mono text-sm">
               <div className="flex justify-between items-center bg-black border border-white/5 p-3 rounded">
                 <span className="text-gray-500">Asset ID</span>
@@ -138,25 +185,31 @@ export default function CertificateNFTPage() {
               </div>
               <div className="flex justify-between items-center bg-black border border-white/5 p-3 rounded">
                 <span className="text-gray-500">Transaction Hash</span>
-                <span className="text-red-400 break-all ml-4 text-right">{certificate.certificateHash || 'Pending confirmation'}</span>
+                <span className="text-red-400 break-all ml-4 text-right">
+                  {certificate.certificateHash || 'Pending confirmation'}
+                </span>
               </div>
               <div className="flex justify-between items-center bg-black border border-white/5 p-3 rounded">
                 <span className="text-gray-500">Contract</span>
-                <span className="text-gray-300 truncate max-w-[200px]">CXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</span>
+                <span className="text-gray-300 truncate max-w-[200px]">
+                  CXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                </span>
               </div>
               <div className="flex justify-between items-center bg-black border border-white/5 p-3 rounded">
                 <span className="text-gray-500">Status</span>
-                <span className="text-green-500 font-bold uppercase tracking-widest">{certificate.status}</span>
+                <span className="text-green-500 font-bold uppercase tracking-widest">
+                  {certificate.status}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="flex gap-4">
             <button
-               onClick={verifyOnChain}
-               disabled={isVerifying}
+              onClick={verifyOnChain}
+              disabled={isVerifying}
               className={`flex-1 py-4 font-black uppercase tracking-widest rounded-xl transition-all ${
-                isVerifying 
+                isVerifying
                   ? 'bg-zinc-800 text-gray-500 cursor-wait'
                   : 'bg-white text-black hover:bg-gray-200 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]'
               }`}
@@ -164,17 +217,26 @@ export default function CertificateNFTPage() {
               {isVerifying ? 'Polling Network...' : 'Verify On-Chain'}
             </button>
             <button className="px-6 py-4 bg-zinc-900 border border-white/10 hover:border-red-500/50 text-white rounded-xl transition-colors group">
-              <svg className="w-6 h-6 group-hover:text-red-500 transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
+              <svg
+                className="w-6 h-6 group-hover:text-red-500 transition-colors"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+              </svg>
             </button>
           </div>
 
           {verificationResult && (
-             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center animate-pulse mt-4">
-                <p className="text-green-500 font-bold uppercase tracking-widest text-sm mb-1">Asset Verified</p>
-                <p className="text-xs text-green-400/70 font-mono">Found immutable match on network nodes.</p>
-             </div>
+            <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center animate-pulse mt-4">
+              <p className="text-green-500 font-bold uppercase tracking-widest text-sm mb-1">
+                Asset Verified
+              </p>
+              <p className="text-xs text-green-400/70 font-mono">
+                Found immutable match on network nodes.
+              </p>
+            </div>
           )}
-
         </div>
       </div>
     </div>
