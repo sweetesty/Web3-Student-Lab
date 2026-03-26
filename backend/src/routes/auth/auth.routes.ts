@@ -1,7 +1,8 @@
 import { Request, Response, Router } from 'express';
 import { authenticate } from '../../auth/auth.middleware.js';
 import { login, register } from '../../auth/auth.service.js';
-import { loginSchema, registerSchema } from '../../auth/validation.schemas.js';
+import { LoginRequest } from '../../auth/types.js';
+import { registerSchema } from '../../auth/validation.schemas.js';
 import { validateRequest } from '../../utils/validation.js';
 
 const router = Router();
@@ -63,7 +64,7 @@ router.post('/login', async (req: Request, res: Response) => {
       });
       return;
     }
-    
+
     if (error instanceof Error && error.message === 'Invalid credentials') {
       res.status(401).json({ error: error.message });
       return;
