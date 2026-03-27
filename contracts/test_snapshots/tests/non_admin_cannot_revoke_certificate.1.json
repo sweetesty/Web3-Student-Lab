@@ -1,9 +1,10 @@
 {
   "generators": {
-    "address": 2,
+    "address": 3,
     "nonce": 0
   },
   "auth": [
+    [],
     [],
     [],
     []
@@ -41,6 +42,55 @@
                       "wasm": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
                     },
                     "storage": [
+                      {
+                        "key": {
+                          "symbol": "SOLID"
+                        },
+                        "val": {
+                          "map": [
+                            {
+                              "key": {
+                                "symbol": "course_name"
+                              },
+                              "val": {
+                                "string": "Rust 101"
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "issue_date"
+                              },
+                              "val": {
+                                "u64": 0
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "revoked"
+                              },
+                              "val": {
+                                "bool": false
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "student"
+                              },
+                              "val": {
+                                "string": "Ada Lovelace"
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "symbol"
+                              },
+                              "val": {
+                                "symbol": "SOLID"
+                              }
+                            }
+                          ]
+                        }
+                      },
                       {
                         "key": {
                           "symbol": "admin"
