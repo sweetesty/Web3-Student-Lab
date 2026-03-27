@@ -5,14 +5,15 @@ pub mod token;
 
 use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, Env, String, Symbol, Vec};
 
+/// W3C-compliant Decentralized Identifier (DID) stored for each student.
+/// Format: did:soroban:{stellar_address}
+/// This allows certificates to be linked to a verifiable, self-sovereign identity.
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Certificate {
-    pub course_symbol: Symbol,
+pub struct StudentDid {
     pub student: Address,
-    pub course_name: String,
-    pub issue_date: u64,
-    pub revoked: bool,
+    pub did: String,
+    pub updated_at: u64,
 }
 
 /// Composite storage key: one entry per (course, student) pair.
@@ -31,6 +32,7 @@ enum DataKey {
     MintCap,
     MintedThisPeriod,
     CurrentPeriod,
+    StudentDid(Address), // Maps student address to their DID
 }
 
 /// Error types for CertificateContract
@@ -43,6 +45,8 @@ pub enum CertError {
     CertificateNotFound = 4,
     MintCapExceeded = 5,
     InvalidMintCap = 6,
+    InvalidDid = 7,
+    DidNotFound = 8,
 }
 
 const DEFAULT_MINT_CAP: u32 = 1000;
@@ -343,6 +347,99 @@ impl CertificateContract {
         let remaining = mint_cap.saturating_sub(minted_this_period);
 
         (current_period, minted_this_period, mint_cap, remaining)
+    }
+
+    /// Update the DID for the calling student address.
+    /// Implements W3C DID standard with Soroban method: did:soroban:{stellar_address}
+    ///
+    /// Requirements:
+    /// - Caller must authenticate (require_auth)
+    /// - DID must start with "did:soroban:" prefix (W3C compliant format)
+    ///
+    /// # Arguments
+    /// * `caller` - The student address calling this function (must match caller authentication)
+    /// * `did` - The new W3C-compliant DID string (format: did:soroban:{address})
+    pub fn update_did(env: Env, caller: Address, did: String) {
+        caller.require_auth();
+
+        // Validate DID format: must start with "did:soroban:"
+        let prefix = String::from_str(&env, "did:soroban:");
+        if !did.starts_with(&prefix) {
+            panic_with_error!(&env, CertError::InvalidDid);
+        }
+
+        let timestamp = env.ledger().timestamp();
+
+        // Store the DID
+        let student_did = StudentDid {
+            student: caller.clone(),
+            did: did.clone(),
+            updated_at: timestamp,
+        };
+
+        env.storage()
+            .instance()
+            .set(&DataKey::StudentDid(caller.clone()), &student_did);
+
+        // Emit DID update event
+        env.events().publish(
+            Symbol::new(&env, "did_updated"),
+            (caller.clone(), did.clone(), timestamp),
+        );
+    }
+
+    /// Retrieve the DID for a student address.
+    ///
+    /// # Arguments
+    /// * `student` - The student address to look up
+    ///
+    /// # Returns
+    /// * `Option<StudentDid>` - The student's DID if it exists
+    pub fn get_did(env: Env, student: Address) -> Option<StudentDid> {
+        env.storage()
+            .instance()
+            .get(&DataKey::StudentDid(student))
+    }
+
+    /// Remove a student's DID (for privacy/compliance scenarios).
+    /// Only callable by the administrator.
+    ///
+    /// # Arguments
+    /// * `caller` - The administrator address calling this function
+    /// * `student` - The student address whose DID should be removed
+    pub fn remove_did(env: Env, caller: Address, student: Address) {
+        caller.require_auth();
+
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .expect("contract not initialized");
+
+        if caller != admin {
+            panic_with_error!(&env, CertError::Unauthorized);
+        }
+
+        // Check if DID exists
+        let existing_did: Option<StudentDid> = env
+            .storage()
+            .instance()
+            .get(&DataKey::StudentDid(student.clone()));
+
+        if existing_did.is_none() {
+            panic_with_error!(&env, CertError::DidNotFound);
+        }
+
+        // Remove the DID
+        env.storage()
+            .instance()
+            .remove(&DataKey::StudentDid(student.clone()));
+
+        // Emit DID removal event
+        env.events().publish(
+            Symbol::new(&env, "did_removed"),
+            (caller, student),
+        );
     }
 }
 
