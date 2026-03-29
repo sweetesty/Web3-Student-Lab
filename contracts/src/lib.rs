@@ -892,3 +892,6 @@ impl CertificateContract {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod prop_tests;
