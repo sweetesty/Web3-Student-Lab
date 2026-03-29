@@ -1,5 +1,6 @@
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Env, Vec, String, Symbol,
+    contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Env, String,
+    Vec,
 };
 
 use crate::CertificateContractClient;
@@ -50,9 +51,7 @@ impl RsTokenContract {
         env.storage()
             .instance()
             .set(&DataKey::CertificateContract, &certificate_contract);
-        env.storage()
-            .instance()
-            .set(&DataKey::MintPaused, &false);
+        env.storage().instance().set(&DataKey::MintPaused, &false);
         env.storage()
             .instance()
             .set(&DataKey::Owner, &certificate_contract);
@@ -167,11 +166,7 @@ impl RsTokenContract {
         }
 
         // Check authorization: only owner or the student themselves can burn
-        let owner: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::Owner)
-            .unwrap();
+        let owner: Address = env.storage().instance().get(&DataKey::Owner).unwrap();
 
         if caller != owner && caller != student {
             panic_with_error!(&env, TokenError::NotAuthorized);
@@ -231,11 +226,15 @@ impl RsTokenContract {
             // Remove balance entry if zero to save storage
             env.storage().instance().remove(&from_balance_key);
         } else {
-            env.storage().instance().set(&from_balance_key, &new_from_balance);
+            env.storage()
+                .instance()
+                .set(&from_balance_key, &new_from_balance);
         }
 
         // Update recipient balance
-        env.storage().instance().set(&to_balance_key, &new_to_balance);
+        env.storage()
+            .instance()
+            .set(&to_balance_key, &new_to_balance);
 
         // Emit the Transferred event
         env.events().publish(
@@ -280,11 +279,7 @@ impl RsTokenContract {
         caller.require_auth();
 
         // Check authorization: only owner can update metadata
-        let owner: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::Owner)
-            .unwrap();
+        let owner: Address = env.storage().instance().get(&DataKey::Owner).unwrap();
 
         if caller != owner {
             panic_with_error!(&env, TokenError::NotAuthorized);
@@ -309,17 +304,15 @@ impl RsTokenContract {
             .set(&DataKey::TokenMetadata, &metadata);
 
         // Emit event for URI update
-        env.events().publish(
-            ("uri_updated", "old_uri", "new_uri"),
-            (old_uri, new_uri),
-        );
+        env.events()
+            .publish(("uri_updated", "old_uri", "new_uri"), (old_uri, new_uri));
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use soroban_sdk::{testutils::{Address as _, Events}, vec, Address, Env};
+    use soroban_sdk::{testutils::Address as _, vec, Address, Env};
 
     #[test]
     fn mints_balance_for_student_when_called_by_certificate_contract() {
@@ -675,7 +668,10 @@ mod tests {
         assert_eq!(metadata.name, String::from_str(&env, "RS-Token"));
         assert_eq!(metadata.symbol, String::from_str(&env, "RST"));
         assert_eq!(metadata.decimals, 0u32);
-        assert_eq!(metadata.uri, String::from_str(&env, "https://metadata.web3-student-lab.com/token/{id}"));
+        assert_eq!(
+            metadata.uri,
+            String::from_str(&env, "https://metadata.web3-student-lab.com/token/{id}")
+        );
     }
 
     #[test]
@@ -730,7 +726,6 @@ mod tests {
         // Verify all required fields are present and have correct types
         assert!(!metadata.name.is_empty());
         assert!(!metadata.symbol.is_empty());
-        assert!(metadata.decimals >= 0);
         assert!(!metadata.uri.is_empty());
 
         // Verify symbol is reasonable length (common token symbols are 3-5 chars)
