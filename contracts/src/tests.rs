@@ -2,7 +2,7 @@ use super::*;
 use soroban_sdk::{
     symbol_short,
     testutils::{Address as _, Events, Ledger},
-    vec, Address, Bytes, Env, FromVal, String, Symbol,
+    vec, Address, BytesN, Env, FromVal, String, Symbol,
 };
 
 fn setup() -> (
@@ -266,23 +266,22 @@ fn meta_tx_issues_certificate_for_student() {
     let course_name = String::from_str(&env, "Meta Course");
 
     let call_data = MetaTxCallData {
+        instructor: admin.clone(),
         course_symbol: course_symbol.clone(),
         student: student.clone(),
         course_name: course_name.clone(),
         nonce: 0,
     };
 
-    let cert = client.execute_meta_tx(&admin, &Bytes::new(&env), &call_data);
+    let sig = BytesN::from_array(&env, &[0u8; 64]);
+    let cert = client.execute_meta_tx(&sig, &call_data);
 
     assert_eq!(cert.student, student);
     assert_eq!(cert.course_symbol, course_symbol);
     assert_eq!(cert.issue_date, 9_000);
     assert!(!cert.revoked);
 
-    assert_eq!(
-        client.get_certificate(&course_symbol, &student),
-        Some(cert)
-    );
+    assert_eq!(client.get_certificate(&course_symbol, &student), Some(cert));
 }
 
 #[test]
@@ -290,6 +289,7 @@ fn meta_tx_nonce_increments_after_execution() {
     let (env, admin, _, _, client) = setup();
 
     let call_data = MetaTxCallData {
+        instructor: admin.clone(),
         course_symbol: symbol_short!("NONCE"),
         student: Address::generate(&env),
         course_name: String::from_str(&env, "Nonce Test"),
@@ -297,7 +297,8 @@ fn meta_tx_nonce_increments_after_execution() {
     };
 
     assert_eq!(client.get_nonce(&admin), 0);
-    client.execute_meta_tx(&admin, &Bytes::new(&env), &call_data);
+    let sig = BytesN::from_array(&env, &[0u8; 64]);
+    client.execute_meta_tx(&sig, &call_data);
     assert_eq!(client.get_nonce(&admin), 1);
 }
 
@@ -307,14 +308,16 @@ fn meta_tx_replay_is_rejected() {
     let (env, admin, _, _, client) = setup();
 
     let call_data = MetaTxCallData {
+        instructor: admin.clone(),
         course_symbol: symbol_short!("REPLY"),
         student: Address::generate(&env),
         course_name: String::from_str(&env, "Replay Test"),
         nonce: 0,
     };
 
-    client.execute_meta_tx(&admin, &Bytes::new(&env), &call_data.clone());
-    client.execute_meta_tx(&admin, &Bytes::new(&env), &call_data);
+    let sig = BytesN::from_array(&env, &[0u8; 64]);
+    client.execute_meta_tx(&sig, &call_data.clone());
+    client.execute_meta_tx(&sig, &call_data);
 }
 
 #[test]
@@ -324,13 +327,15 @@ fn meta_tx_non_instructor_is_rejected() {
 
     let attacker = Address::generate(&env);
     let call_data = MetaTxCallData {
+        instructor: attacker.clone(),
         course_symbol: symbol_short!("HACK"),
         student: Address::generate(&env),
         course_name: String::from_str(&env, "Hack Attempt"),
         nonce: 0,
     };
 
-    client.execute_meta_tx(&attacker, &Bytes::new(&env), &call_data);
+    let sig = BytesN::from_array(&env, &[0u8; 64]);
+    client.execute_meta_tx(&sig, &call_data);
 }
 
 #[test]
@@ -339,13 +344,15 @@ fn meta_tx_emits_event() {
 
     let course_symbol = symbol_short!("EVNT");
     let call_data = MetaTxCallData {
+        instructor: admin.clone(),
         course_symbol: course_symbol.clone(),
         student: Address::generate(&env),
         course_name: String::from_str(&env, "Event Test"),
         nonce: 0,
     };
 
-    client.execute_meta_tx(&admin, &Bytes::new(&env), &call_data);
+    let sig = BytesN::from_array(&env, &[0u8; 64]);
+    client.execute_meta_tx(&sig, &call_data);
 
     let (addr, topics, _) = env.events().all().last().unwrap();
     assert_eq!(addr, client.address);
@@ -392,10 +399,7 @@ fn non_admin_cannot_propose_mint_cap() {
     let (env, _a, _b, _c, client) = setup();
 
     let attacker = Address::generate(&env);
-    client.propose_action(
-        &attacker,
-        &PendingAdminAction::SetMintCap(500),
-    );
+    client.propose_action(&attacker, &PendingAdminAction::SetMintCap(500));
 }
 
 #[test]
@@ -517,7 +521,8 @@ fn mint_cap_update_emits_event() {
     let mut found_event = false;
     for (addr, topics, _) in all_events.iter() {
         if addr == client.address
-            && Symbol::from_val(&env, &topics.get(0).unwrap()) == Symbol::new(&env, "mint_cap_updated")
+            && Symbol::from_val(&env, &topics.get(0).unwrap())
+                == Symbol::new(&env, "mint_cap_updated")
         {
             found_event = true;
         }
@@ -545,7 +550,8 @@ fn issue_emits_mint_period_update_event() {
     let mut found_event = false;
     for (addr, topics, _) in all_events.iter() {
         if addr == client.address
-            && Symbol::from_val(&env, &topics.get(0).unwrap()) == Symbol::new(&env, "mint_period_update")
+            && Symbol::from_val(&env, &topics.get(0).unwrap())
+                == Symbol::new(&env, "mint_period_update")
         {
             found_event = true;
         }
