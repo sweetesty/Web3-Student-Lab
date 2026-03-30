@@ -234,10 +234,6 @@ impl RsTokenContract {
         // Check authorization: only owner or the student themselves can burn
         if caller != student {
             Self::check_owner(&env, &caller);
-        let owner: Address = env.storage().instance().get(&DataKey::Owner).unwrap();
-
-        if caller != owner && caller != student {
-            panic_with_error!(&env, TokenError::NotAuthorized);
         }
 
         let balance_key = DataKey::Balance(student.clone(), token_id);
@@ -345,14 +341,6 @@ impl RsTokenContract {
     /// Admin function to update the off-chain JSON description URI.
     pub fn update_uri(env: Env, caller: Address, new_uri: String) {
         Self::only_owner(&env, &caller);
-        caller.require_auth();
-
-        // Check authorization: only owner can update metadata
-        let owner: Address = env.storage().instance().get(&DataKey::Owner).unwrap();
-
-        if caller != owner {
-            panic_with_error!(&env, TokenError::NotAuthorized);
-        }
 
         // Get existing metadata
         let mut metadata: TokenMetadata = env
