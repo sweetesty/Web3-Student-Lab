@@ -91,6 +91,22 @@
                         "key": {
                           "vec": [
                             {
+                              "symbol": "ActiveProposals"
+                            }
+                          ]
+                        },
+                        "val": {
+                          "vec": [
+                            {
+                              "u32": 2
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "key": {
+                          "vec": [
+                            {
                               "symbol": "ProposalActive"
                             },
                             {

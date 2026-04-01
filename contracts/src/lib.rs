@@ -8,6 +8,7 @@
 #![no_std]
 
 pub mod payment_gateway;
+pub mod sai_wrapper;
 pub mod session;
 pub mod staking;
 // Fuzz module uses `std` and legacy Soroban test patterns; keep out of the default test build
@@ -675,7 +676,6 @@ impl CertificateContract {
         // Emit summary event for the entire batch operation
         env.events().publish(
             (Symbol::new(&env, "v1_batch_issue_completed"),),
-            (Symbol::new(&env, "batch_issue_completed"),),
             (instructor.clone(), total_certificates, course.clone()),
         );
 

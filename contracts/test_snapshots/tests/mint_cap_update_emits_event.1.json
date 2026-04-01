@@ -339,7 +339,7 @@
           "v0": {
             "topics": [
               {
-                "symbol": "mint_cap_updated"
+                "symbol": "v1_mint_cap_updated"
               }
             ],
             "data": {
@@ -366,7 +366,7 @@
           "v0": {
             "topics": [
               {
-                "symbol": "action_executed"
+                "symbol": "v1_action_executed"
               }
             ],
             "data": {

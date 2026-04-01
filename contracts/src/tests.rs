@@ -875,8 +875,6 @@ fn batch_issue_gas_efficiency() {
 
     for symbol_name in symbol_names {
         symbols.push_back(Symbol::new(&env, symbol_name));
-    for name in &symbol_names {
-        symbols.push_back(Symbol::new(&env, name));
         students.push_back(Address::generate(&env));
     }
 
