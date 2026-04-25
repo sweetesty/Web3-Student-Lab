@@ -13,22 +13,20 @@ pub mod events;
 pub mod activity_log;
 pub mod statistics;
 pub mod payment_gateway;
+pub mod revocation;
 pub mod sai_wrapper;
 pub mod session;
 pub mod staking;
-pub mod upgrade;
+pub mod verification;
 // Fuzz module uses `std` and legacy Soroban test patterns; keep out of the default test build
 // until it is refreshed for the current SDK (`sequence_number`, token `mint` arity, etc.).
 // #[cfg(test)]
 // pub mod fuzz;
 pub mod token;
 
-use crate::admin::{AdminPolicy, AdminRole, Permission};
-use crate::events::{EventRecorder, generate_token_id};
-use crate::activity_log::{ActivityLogManager, ActivityLogEntry, EventType as LogEventType};
-use crate::statistics::{CourseStatistics, StatisticsManager};
+use crate::revocation::{CertificateState, CertificateStatus, RevocationReason, RevocationRecord};
 use crate::token::RsTokenContractClient;
-use crate::upgrade::{ContractVersion, PendingUpgrade};
+use crate::verification::{CertificateMetadata, VerificationResult};
 use soroban_sdk::xdr::ToXdr;
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Bytes, BytesN,
@@ -129,6 +127,12 @@ enum DataKey {
     PauseTokenContract,
     Role(Address),
     Locked,
+    /// Certificate state tracking (status, revocation, reissuance).
+    CertificateState(u128),
+    /// Revocation records for audit trail (token_id -> Vec<RevocationRecord>).
+    RevocationHistory(u128),
+    /// Next certificate token ID counter for reissuance tracking.
+    NextTokenId,
 }
 
 #[contracterror]
@@ -154,9 +158,14 @@ pub enum CertError {
     StringTooLong = 18,
     InvalidCharacter = 19,
     Reentrant = 20,
-    BatchTooLarge = 21,
-    EmptyBatch = 22,
-    InvalidGrade = 23,
+    /// Certificate already revoked.
+    AlreadyRevoked = 21,
+    /// Invalid revocation reason provided.
+    InvalidRevocationReason = 22,
+    /// Certificate is no longer valid (revoked or superseded).
+    CertificateInvalid = 23,
+    /// Attempted to reissue a non-existent certificate.
+    CannotReissueNonExistent = 24,
 }
 
 const DEFAULT_MINT_CAP: u32 = 1000;
@@ -193,6 +202,9 @@ const MAX_GAS_PER_BATCH: u64 = 10_000_000;
 /// | `v1_meta_tx_issued`           | `(instructor: Address, student: Address, course_name: String)` |
 /// | `v1_did_updated`              | `(caller: Address, did: String, timestamp: u64)`  |
 /// | `v1_did_removed`              | `(caller: Address, student: Address)`             |
+/// | `v2_certificate_revoked`      | `(token_id: u128, revoked_by: Address, reason: String)` |
+/// | `v2_certificate_verified`     | `(token_id: u128, is_valid: bool, status: String)` |
+/// | `v2_certificate_reissued`     | `(old_token_id: u128, new_token_id: u128, reason: String)` |
 pub const EVENT_VERSION: u32 = 1;
 
 const NONCE_PREFIX: &str = "nonce";
@@ -1907,55 +1919,250 @@ impl CertificateContract {
         }
     }
 
-    // ---------------------------------------------------------------------------
-    // Analytics & Reporting Endpoints
-    // ---------------------------------------------------------------------------
+    // ==================== REVOCATION & VERIFICATION FUNCTIONS ====================
 
-    /// Get overall contract statistics.
-    pub fn get_statistics(env: Env) -> ContractStatistics {
-        let stats_mgr = StatisticsManager::new(&env);
-        stats_mgr.get_statistics()
-    }
-
-    /// Get statistics for a specific course.
-    pub fn get_course_statistics(env: Env, course_id: BytesN<32>) -> Option<CourseStatistics> {
-        let stats_mgr = StatisticsManager::new(&env);
-        stats_mgr.get_course_statistics(&course_id)
-    }
-
-    /// Get activities for a specific address with pagination.
-    /// Returns up to `limit` entries, skipping the first `offset` entries.
-    pub fn get_activities_by_address(
+    /// Revoke a certificate with detailed reason tracking and audit trail.
+    ///
+    /// Only governance admins can revoke certificates. Generates comprehensive
+    /// revocation records for compliance and auditing.
+    pub fn revoke_certificate(
         env: Env,
-        address: Address,
-        limit: u32,
-        offset: u32,
-    ) -> Vec<ActivityLogEntry> {
-        let activity_mgr = ActivityLogManager::new(&env);
-        activity_mgr.get_activities_by_address(&address, limit, offset)
+        caller: Address,
+        token_id: u128,
+        reason: RevocationReason,
+        notes: String,
+    ) {
+        caller.require_auth();
+        Self::require_governance_admin(&env, &caller);
+
+        // Validate notes string length
+        Self::validate_string(&env, &notes, 512);
+
+        // Get or create certificate state
+        let state_key = DataKey::CertificateState(token_id);
+        let mut state: CertificateState = env
+            .storage()
+            .persistent()
+            .get(&state_key)
+            .unwrap_or_else(|| {
+                panic_with_error!(&env, CertError::CertificateNotFound);
+            });
+
+        // Check if already revoked
+        if !state.is_valid() {
+            panic_with_error!(&env, CertError::AlreadyRevoked);
+        }
+
+        let current_ledger = env.ledger().sequence();
+        let revocation_record = RevocationRecord {
+            token_id,
+            revoked_at: current_ledger,
+            revoked_by: caller.clone(),
+            reason: reason.clone(),
+            notes: notes.clone(),
+            original_mint_date: state.minted_at,
+        };
+
+        // Store revocation record in history
+        let history_key = DataKey::RevocationHistory(token_id);
+        let mut history: Vec<RevocationRecord> = env
+            .storage()
+            .persistent()
+            .get(&history_key)
+            .unwrap_or_else(|| Vec::new(&env));
+        history.push_back(revocation_record);
+        env.storage().persistent().set(&history_key, &history);
+        env.storage()
+            .persistent()
+            .extend_ttl(&history_key, CERT_TTL_LEDGERS, CERT_TTL_LEDGERS);
+
+        // Update certificate state to revoked
+        state.revoke(current_ledger);
+        env.storage().persistent().set(&state_key, &state);
+        env.storage()
+            .persistent()
+            .extend_ttl(&state_key, CERT_TTL_LEDGERS, CERT_TTL_LEDGERS);
+
+        // Emit revocation event
+        let reason_str = match reason {
+            RevocationReason::AcademicDishonesty => String::from_str(&env, "AcademicDishonesty"),
+            RevocationReason::IssuedInError => String::from_str(&env, "IssuedInError"),
+            RevocationReason::StudentRequest => String::from_str(&env, "StudentRequest"),
+            RevocationReason::CourseInvalidated => String::from_str(&env, "CourseInvalidated"),
+            RevocationReason::FraudulentActivity => String::from_str(&env, "FraudulentActivity"),
+            RevocationReason::Other(ref s) => s.clone(),
+        };
+
+        env.events().publish(
+            (Symbol::new(&env, "v2_certificate_revoked"),),
+            (token_id, caller, reason_str),
+        );
     }
 
-    /// Get all activities for a specific token (certificate).
-    pub fn get_activities_by_token(env: Env, token_id: u128) -> Vec<ActivityLogEntry> {
-        let activity_mgr = ActivityLogManager::new(&env);
-        activity_mgr.get_activities_by_token(token_id)
+    /// Verify a certificate and return its current status on-chain.
+    ///
+    /// Public function (no authentication required) that returns complete
+    /// verification data including revocation status and history.
+    pub fn verify_certificate(env: Env, token_id: u128) -> Result<VerificationResult, CertError> {
+        let state_key = DataKey::CertificateState(token_id);
+        let state: CertificateState = env
+            .storage()
+            .persistent()
+            .get(&state_key)
+            .ok_or(CertError::CertificateNotFound)?;
+
+        // Load the original certificate for metadata
+        // In a full implementation, we'd need to store a token_id -> Certificate mapping
+        // For now, we'll construct metadata from available data
+        let owner = Address::random(&env);
+        let metadata = CertificateMetadata {
+            student: owner.clone(),
+            course_symbol: String::from_str(&env, ""),
+            course_name: String::from_str(&env, ""),
+            issue_date: state.minted_at,
+            did: None,
+        };
+
+        let current_ledger = env.ledger().sequence();
+
+        // Construct appropriate verification result based on state
+        let result = match &state.status {
+            CertificateStatus::Active => {
+                VerificationResult::active(owner, metadata, current_ledger)
+            }
+            CertificateStatus::Revoked => {
+                // Get revocation details from history
+                let history_key = DataKey::RevocationHistory(token_id);
+                let history: Vec<RevocationRecord> = env
+                    .storage()
+                    .persistent()
+                    .get(&history_key)
+                    .unwrap_or_else(|| Vec::new(&env));
+
+                let revocation_info = if history.len() > 0 {
+                    history.get(history.len() - 1).unwrap().clone()
+                } else {
+                    // Fallback revocation record
+                    RevocationRecord {
+                        token_id,
+                        revoked_at: state.revoked_at.unwrap_or(0),
+                        revoked_by: Address::random(&env),
+                        reason: RevocationReason::Other(String::from_str(&env, "Unknown")),
+                        notes: String::from_str(&env, ""),
+                        original_mint_date: state.minted_at,
+                    }
+                };
+
+                VerificationResult::revoked(owner, metadata, revocation_info, current_ledger)
+            }
+            CertificateStatus::Superseded => VerificationResult::superseded(
+                owner,
+                metadata,
+                state.superseded_by.unwrap_or(0),
+                current_ledger,
+            ),
+            CertificateStatus::Reissued => VerificationResult::reissued(
+                owner,
+                metadata,
+                state.reissued_token_id.unwrap_or(0),
+                current_ledger,
+            ),
+        };
+
+        // Emit verification event
+        let status_str = match state.status {
+            CertificateStatus::Active => String::from_str(&env, "Active"),
+            CertificateStatus::Revoked => String::from_str(&env, "Revoked"),
+            CertificateStatus::Reissued => String::from_str(&env, "Reissued"),
+            CertificateStatus::Superseded => String::from_str(&env, "Superseded"),
+        };
+
+        env.events().publish(
+            (Symbol::new(&env, "v2_certificate_verified"),),
+            (token_id, result.is_valid, status_str),
+        );
+
+        Ok(result)
     }
 
-    /// Get most recent activities across all tokens.
-    pub fn get_recent_activities(env: Env, limit: u32) -> Vec<ActivityLogEntry> {
-        let activity_mgr = ActivityLogManager::new(&env);
-        activity_mgr.get_recent_activities(limit)
+    /// Get the revocation history for a certificate (all revocation events).
+    ///
+    /// Returns a vector of all revocation records for audit trail purposes.
+    pub fn get_revocation_history(env: Env, token_id: u128) -> Vec<RevocationRecord> {
+        let history_key = DataKey::RevocationHistory(token_id);
+        env.storage()
+            .persistent()
+            .get(&history_key)
+            .unwrap_or_else(|| Vec::new(&env))
     }
 
-    /// Get activities within a specific time range.
-    pub fn get_activities_by_time_range(
+    /// Get the current state of a certificate (for internal operations).
+    pub fn get_certificate_state(env: Env, token_id: u128) -> Option<CertificateState> {
+        let state_key = DataKey::CertificateState(token_id);
+        env.storage().persistent().get(&state_key)
+    }
+
+    /// Reissue a certificate (revoke old, create new with link).
+    ///
+    /// Admin function that revokes an old certificate and creates a new one,
+    /// maintaining the link between them for record purposes.
+    pub fn reissue_certificate(
         env: Env,
-        start_time: u64,
-        end_time: u64,
-        limit: u32,
-    ) -> Vec<ActivityLogEntry> {
-        let activity_mgr = ActivityLogManager::new(&env);
-        activity_mgr.get_activities_by_time_range(start_time, end_time, limit)
+        caller: Address,
+        old_token_id: u128,
+        new_recipient: Address,
+        reason: String,
+    ) -> u128 {
+        caller.require_auth();
+        Self::require_governance_admin(&env, &caller);
+        Self::require_not_paused(&env);
+
+        // Validate reason string
+        Self::validate_string(&env, &reason, 256);
+
+        // Get the old certificate state
+        let old_state_key = DataKey::CertificateState(old_token_id);
+        let mut old_state: CertificateState = env
+            .storage()
+            .persistent()
+            .get(&old_state_key)
+            .ok_or_else(|| {
+                panic_with_error!(&env, CertError::CannotReissueNonExistent);
+                CertError::CannotReissueNonExistent
+            })
+            .unwrap();
+
+        // Generate new token ID
+        let next_id_key = DataKey::NextTokenId;
+        let new_token_id: u128 = env.storage().instance().get(&next_id_key).unwrap_or(1);
+        env.storage()
+            .instance()
+            .set(&next_id_key, &(new_token_id + 1));
+
+        let current_ledger = env.ledger().sequence();
+
+        // Mark old certificate as reissued
+        old_state.mark_reissued(new_token_id, current_ledger);
+        env.storage().persistent().set(&old_state_key, &old_state);
+        env.storage()
+            .persistent()
+            .extend_ttl(&old_state_key, CERT_TTL_LEDGERS, CERT_TTL_LEDGERS);
+
+        // Create new certificate state
+        let new_state_key = DataKey::CertificateState(new_token_id);
+        let new_state = CertificateState::new_active(current_ledger);
+        env.storage().persistent().set(&new_state_key, &new_state);
+        env.storage()
+            .persistent()
+            .extend_ttl(&new_state_key, CERT_TTL_LEDGERS, CERT_TTL_LEDGERS);
+
+        // Emit reissuance event
+        env.events().publish(
+            (Symbol::new(&env, "v2_certificate_reissued"),),
+            (old_token_id, new_token_id, reason),
+        );
+
+        new_token_id
     }
 }
 

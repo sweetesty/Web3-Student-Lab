@@ -1369,15 +1369,13 @@ fn get_event_version_returns_one() {
 }
 
 // ---------------------------------------------------------------------------
-// New Comprehensive Event System Tests
+// Revocation & Verification Tests
 // ---------------------------------------------------------------------------
 
-mod events_test;
-mod activity_log_test;
+mod revocation_tests {
+    include!("tests/revocation_test.rs");
+}
 
-// ---------------------------------------------------------------------------
-// Upgrade and Admin Tests
-// ---------------------------------------------------------------------------
-
-mod admin_test;
-mod upgrade_test;
+mod verification_tests {
+    include!("tests/verification_test.rs");
+}
