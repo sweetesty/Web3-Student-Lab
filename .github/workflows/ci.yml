@@ -24,6 +24,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: backend
@@ -40,9 +49,14 @@ jobs:
         run: |
           npx prisma migrate deploy
       - run: npm run build
+        env:
+          REDIS_URL: redis://localhost:6379
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/web3-student-lab-test?schema=public
+          JWT_SECRET: test-secret-key-that-is-long-enough-for-testing-123456789
       - run: npm test
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/web3-student-lab-test?schema=public
+          REDIS_URL: redis://localhost:6379
           JWT_SECRET: test-secret-key-that-is-long-enough-for-testing-123456789
   frontend:
     name: Frontend CI

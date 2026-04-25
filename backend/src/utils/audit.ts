@@ -3,14 +3,14 @@ import prisma from '../db/index.js';
 import logger from './logger.js';
 
 export interface AuditLogData {
-  userId?: string;
-  userEmail?: string;
+  userId?: string | null;
+  userEmail?: string | null;
   action: string;
-  entity?: string;
-  entityId?: string;
-  details?: any;
-  ipAddress?: string;
-  userAgent?: string;
+  entity?: string | null;
+  entityId?: string | null;
+  details?: unknown;
+  ipAddress?: string | null;
+  userAgent?: string | null;
 }
 
 /**
@@ -20,14 +20,15 @@ export async function logAudit(data: AuditLogData): Promise<void> {
   try {
     await prisma.auditLog.create({
       data: {
-        userId: data.userId,
-        userEmail: data.userEmail,
+        userId: data.userId ?? null,
+        userEmail: data.userEmail ?? null,
         action: data.action,
-        entity: data.entity,
-        entityId: data.entityId,
-        details: data.details,
-        ipAddress: data.ipAddress,
-        userAgent: data.userAgent,
+        entity: data.entity ?? null,
+        entityId: data.entityId ?? null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        details: (data.details as any) ?? null,
+        ipAddress: data.ipAddress ?? null,
+        userAgent: data.userAgent ?? null,
       },
     });
     logger.info(`Audit Log: ${data.action} by ${data.userEmail || 'unknown'}`);
@@ -45,18 +46,18 @@ export async function logRequestAudit(
   action: string,
   entity?: string,
   entityId?: string,
-  details?: any
+  details?: unknown
 ): Promise<void> {
-  const user = req.user;
-  
+  const user = req.user as { id: string; email: string } | undefined;
+
   return logAudit({
-    userId: user?.id,
-    userEmail: user?.email,
+    userId: user?.id ?? null,
+    userEmail: user?.email ?? null,
     action,
-    entity,
-    entityId,
-    details,
-    ipAddress: req.ip || req.socket.remoteAddress,
-    userAgent: req.headers['user-agent'],
+    entity: entity ?? null,
+    entityId: entityId ?? null,
+    details: details ?? null,
+    ipAddress: (req.ip || req.socket.remoteAddress) ?? null,
+    userAgent: (req.headers['user-agent'] as string) ?? null,
   });
 }

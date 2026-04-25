@@ -22,7 +22,7 @@ router.post('/log', authenticate, async (req: Request, res: Response) => {
     await logRequestAudit(req, action, entity, entityId, details);
 
     res.status(201).json({ status: 'success' });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to record audit log' });
   }
 });
@@ -41,7 +41,7 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
     });
 
     res.json(logs);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch audit logs' });
   }
 });

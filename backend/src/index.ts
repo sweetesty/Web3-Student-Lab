@@ -1,13 +1,21 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
-import redisClient from './cache/RedisClient.js';
-import cacheMetrics from './cache/CacheMetrics.js';
+import { rateLimit } from 'express-rate-limit';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import prisma from './db/index.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import routes from './routes/index.js';
 import { validateEnvironment } from './utils/checkEnv.js';
 import logger from './utils/logger.js';
+import { pubClient, redisConnection, subClient } from './utils/redis.js';
+
+if (process.env.NODE_ENV !== 'test') {
+  import('./jobs/export.worker.js'); // Initialize BullMQ worker
+}
+
+import { initWebSocketGateway } from './websocket/gateway.js';
 
 // Load environment variables
 dotenv.config();
@@ -26,12 +34,33 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 export const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*', // In production, replace with actual frontend URL
+    methods: ['GET', 'POST'],
+  },
+});
+
 const port = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
 
-import { apiRateLimiter } from './middleware/rateLimiter.js';
+// Initialize WebSocket Gateway
+initWebSocketGateway(io);
+
+// Global Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: {
+    status: 'error',
+    message: 'Too many requests from this IP, please try again after 15 minutes',
+  },
+});
 
 // Global Rate Limiting - now using sliding window
 app.use(apiRateLimiter);
@@ -55,10 +84,10 @@ app.use('/api/v1/cache', cacheMetrics);
 app.use('/api/v1', routes);
 
 // Start server only if not in test environment
-let server: ReturnType<typeof app.listen> | null = null;
+let server: ReturnType<typeof httpServer.listen> | null = null;
 
 if (process.env.NODE_ENV !== 'test') {
-  server = app.listen(port, () => {
+  server = httpServer.listen(port, () => {
     logger.info(`Server is running on port ${port}`);
   });
 
@@ -67,6 +96,11 @@ if (process.env.NODE_ENV !== 'test') {
     logger.info('Shutting down gracefully...');
     await redisClient.disconnect();
     await prisma.$disconnect();
+    await Promise.all([
+      redisConnection.quit(),
+      pubClient.quit(),
+      subClient.quit(),
+    ]);
     server?.close(() => {
       logger.info('Server closed');
       process.exit(0);
@@ -77,6 +111,11 @@ if (process.env.NODE_ENV !== 'test') {
     logger.info('Shutting down gracefully...');
     await redisClient.disconnect();
     await prisma.$disconnect();
+    await Promise.all([
+      redisConnection.quit(),
+      pubClient.quit(),
+      subClient.quit(),
+    ]);
     server?.close(() => {
       logger.info('Server closed');
       process.exit(0);

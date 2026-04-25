@@ -38,6 +38,14 @@ const REQUIRED_VARS: EnvVarConfig[] = [
       return value.length >= 32 && value !== 'your-secret-key-change-in-production';
     },
   },
+  {
+    name: 'REDIS_URL',
+    required: true,
+    description: 'Redis connection URL for background jobs and WebSockets',
+    validator: (value: string) => {
+      return value.startsWith('redis://') || value.startsWith('rediss://');
+    },
+  },
 ];
 
 /**

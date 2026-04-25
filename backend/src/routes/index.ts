@@ -11,7 +11,7 @@ import learningRoutes from './learning/learning.routes.js';
 import studentsRouter from './students.js';
 import blockchainRouter from '../blockchain/balance.js';
 import auditRouter from './audit.js';
-import webhookRouter from './webhooks.js';
+import exportRouter from './export.routes.js';
 
 const router = Router();
 
@@ -27,6 +27,7 @@ router.use('/learning', learningRoutes);
 router.use('/generator', generatorRoutes);
 router.use('/user', userRouter);
 router.use('/audit', auditRouter);
+router.use('/export', exportRouter);
 
 // Blockchain routes
 router.use('/blockchain', blockchainRouter);

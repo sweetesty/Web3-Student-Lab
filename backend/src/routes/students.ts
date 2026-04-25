@@ -5,6 +5,7 @@ import { invalidateUserCache } from '../cache/CacheInvalidation.js';
 import { CACHE_KEYS } from '../cache/CacheService.js';
 import { cacheTTL } from '../config/redis.config.js';
 import prisma from '../db/index.js';
+import { broadcastEvent } from '../websocket/gateway.js';
 import { linkDidToCertificates } from './certificates.js';
 
 const router = Router();
@@ -78,7 +79,13 @@ router.post('/', async (req, res) => {
       },
     });
 
-    await invalidateUserCache(student.id);
+    // Broadcast event
+    await broadcastEvent('dashboard_updated', {
+      type: 'STUDENT_CREATED',
+      studentId: student.id,
+      timestamp: new Date().toISOString(),
+    });
+
     res.status(201).json(student);
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('Invalid DID format')) {
