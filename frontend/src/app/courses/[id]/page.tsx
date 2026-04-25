@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { coursesAPI, enrollmentsAPI, certificatesAPI, Course } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { certificatesAPI, Course, coursesAPI, enrollmentsAPI } from "@/lib/api";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function CourseDetailPage() {
   const params = useParams();
@@ -13,7 +13,6 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
-  const [isEnrolling, setIsEnrolling] = useState(false);
   const [isMinting, setIsMinting] = useState(false);
   const [mintSuccess, setMintSuccess] = useState(false);
 
@@ -42,19 +41,12 @@ export default function CourseDetailPage() {
     loadCourse();
   }, [params.id, user, router]);
 
-  const handleEnroll = async () => {
+  const handleEnroll = () => {
     if (!user || !course) return;
 
-    setIsEnrolling(true);
-    try {
-      await enrollmentsAPI.enroll(user.id, course.id);
-      setIsEnrolled(true);
-    } catch (error) {
-      console.error("Failed to enroll:", error);
-      alert("Failed to initialize connection. Please try again.");
-    } finally {
-      setIsEnrolling(false);
-    }
+    router.push(
+      `/enroll?courseId=${encodeURIComponent(course.id)}&courseTitle=${encodeURIComponent(course.title)}&credits=${course.credits}`
+    );
   };
 
   const handleMintCertificate = async () => {
@@ -313,20 +305,19 @@ export default function CourseDetailPage() {
                 <div>
                   <button
                     onClick={handleEnroll}
-                    disabled={isEnrolling || !user}
+                    disabled={!user}
                     className={`w-full py-5 rounded-xl font-black uppercase tracking-widest transition-all ${
-                      isEnrolling || !user
+                      !user
                         ? "bg-gray-800 text-gray-500 cursor-not-allowed border border-white/10"
                         : "bg-white text-black hover:bg-gray-200 transform hover:-translate-y-0.5 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
                     }`}
                   >
-                    {isEnrolling
-                      ? "Connecting..."
-                      : !user
-                        ? "Auth Required"
-                        : "Initialize Module"}
+                    {!user ? "Auth Required" : "Start Enrollment"}
                   </button>
-                  <p className="text-xs text-gray-500 font-mono mt-6 text-center">
+                  <p className="text-xs text-gray-500 font-mono mt-4 text-center">
+                    5-step wizard with progress saving
+                  </p>
+                  <p className="text-xs text-gray-600 font-mono mt-2 text-center">
                     NO GAS FEES • PUBLIC TESTNET
                   </p>
                 </div>
