@@ -1,5 +1,8 @@
 import { Request, Response, Router } from 'express';
+import { authenticate } from '../auth/auth.middleware.js';
 import { getStudentDashboard, getStats } from './dashboard.service.js';
+import { getAggregatedDashboardData } from '../services/bff.service.js';
+import logger from '../utils/logger.js';
 
 const router = Router();
 
@@ -14,6 +17,24 @@ router.get('/stats', async (req: Request, res: Response) => {
     res.json(stats);
   } catch {
     res.status(500).json({ error: 'Failed to fetch platform stats' });
+  }
+});
+
+/**
+ * @route   GET /api/dashboard/me
+ * @desc    BFF aggregation endpoint: returns all dashboard data the frontend needs in one request.
+ *          Runs data fetchers concurrently (Promise.all), uses 30s in-memory cache, and
+ *          returns partial data if one module fails (graceful degradation).
+ * @access  Private
+ */
+router.get('/me', authenticate, async (req: Request, res: Response) => {
+  try {
+    const studentId = req.user!.id;
+    const aggregatedData = await getAggregatedDashboardData(studentId);
+    res.json(aggregatedData);
+  } catch (error) {
+    logger.error('BFF /me endpoint failed:', error);
+    res.status(500).json({ error: 'Failed to load dashboard data' });
   }
 });
 
