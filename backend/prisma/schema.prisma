@@ -12,14 +12,15 @@ datasource db {
 }
 
 model Student {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  did       String?  @unique
-  password  String
-  firstName String
-  lastName  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  did          String?  @unique
+  password     String
+  firstName    String
+  lastName     String
+  walletAddress String? @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   enrollments   Enrollment[]
   certificates  Certificate[]
@@ -47,16 +48,28 @@ model Course {
 }
 
 model Certificate {
-  id          String   @id @default(cuid())
-  studentId   String
-  courseId    String
-  issuedAt    DateTime @default(now())
-  certificateHash String?
-  status      String   @default("pending")
-  did         String?
+  id               String   @id @default(cuid())
+  studentId        String
+  courseId         String
+  tokenId          String   @unique
+  issuedAt         DateTime @default(now())
+  certificateHash  String?
+  status           String   @default("pending") // MINTED, ACTIVE, REVOKED, REISSUED, EXPIRED
+  did              String?
+  metadataUri      String?
+  contractAddress  String?
+  network          String?
+  grade            String?
+  revokedAt        DateTime?
+  revocationReason String?
+  revokedBy        String?
+  previousVersionId String?
+  transactionHash  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student  Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course   Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@map("certificates")
 }
