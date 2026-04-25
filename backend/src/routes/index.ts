@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import blockchainRouter from '../blockchain/balance.js';
 import dashboardRouter from '../dashboard/dashboard.routes.js';
 import feedbackRouter from '../feedback/feedback.routes.js';
 import userRouter from '../user/routes.js';
@@ -9,9 +10,6 @@ import enrollmentsRouter from './enrollments.js';
 import generatorRoutes from './generator/generator.routes.js';
 import learningRoutes from './learning/learning.routes.js';
 import studentsRouter from './students.js';
-import blockchainRouter from '../blockchain/balance.js';
-import auditRouter from './audit.js';
-import exportRouter from './export.routes.js';
 
 const router = Router();
 
@@ -25,6 +23,7 @@ router.use('/dashboard', dashboardRouter);
 router.use('/auth', authRoutes);
 router.use('/learning', learningRoutes);
 router.use('/generator', generatorRoutes);
+router.use('/search', searchRoutes);
 router.use('/user', userRouter);
 router.use('/audit', auditRouter);
 router.use('/export', exportRouter);

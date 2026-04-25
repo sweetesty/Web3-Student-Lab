@@ -28,6 +28,9 @@ model Student {
   learningProgress LearningProgress[]
 
   @@map("students")
+  @@index([firstName, lastName])
+  @@index([email])
+  @@index([createdAt])
 }
 
 model Course {
@@ -45,6 +48,10 @@ model Course {
   learningProgress LearningProgress[]
 
   @@map("courses")
+  @@index([title])
+  @@index([instructor])
+  @@index([credits])
+  @@index([createdAt])
 }
 
 model Certificate {
@@ -72,6 +79,10 @@ model Certificate {
   course   Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@map("certificates")
+  @@index([status])
+  @@index([issuedAt])
+  @@index([studentId])
+  @@index([courseId])
 }
 
 model Enrollment {
