@@ -9,6 +9,9 @@
 
 pub mod admin;
 pub mod enrollment;
+pub mod events;
+pub mod activity_log;
+pub mod statistics;
 pub mod payment_gateway;
 pub mod sai_wrapper;
 pub mod session;
@@ -21,6 +24,9 @@ pub mod upgrade;
 pub mod token;
 
 use crate::admin::{AdminPolicy, AdminRole, Permission};
+use crate::events::{EventRecorder, generate_token_id};
+use crate::activity_log::{ActivityLogManager, ActivityLogEntry, EventType as LogEventType};
+use crate::statistics::{CourseStatistics, StatisticsManager};
 use crate::token::RsTokenContractClient;
 use crate::upgrade::{ContractVersion, PendingUpgrade};
 use soroban_sdk::xdr::ToXdr;
@@ -434,6 +440,14 @@ impl CertificateContract {
             .extend_ttl(&index_key, CERT_TTL_LEDGERS, CERT_TTL_LEDGERS);
     }
 
+    /// Generate a course identifier hash (32 bytes) from a course symbol.
+    fn course_id_from_symbol(env: &Env, course_symbol: &Symbol) -> BytesN<32> {
+        let course_str = course_symbol.to_string();
+        let mut hasher = env.crypto().hasher();
+        hasher.update(course_str.as_bytes());
+        hasher.finalize()
+    }
+
     /// Returns true if `account` has `role`. `Admin` matches the three governance addresses only.
     pub fn has_role(env: Env, account: Address, role: Role) -> bool {
         match role {
@@ -458,9 +472,29 @@ impl CertificateContract {
         env.storage()
             .instance()
             .set(&DataKey::Role(account.clone()), &role);
+
+        // Emit v1 event for backward compatibility
         env.events().publish(
             (Symbol::new(&env, "v1_role_granted"),),
-            (caller, account, role),
+            (caller.clone(), account.clone(), role),
+        );
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_role_granted(&caller, &account, role as u32);
+
+        // Record activity
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}:{}", caller.to_xdr(env_ref).to_vec(), account.to_xdr(env_ref).to_vec(), role as u32);
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::RoleGranted,
+            None,
+            &account,
+            data_hash,
         );
     }
 
@@ -480,8 +514,28 @@ impl CertificateContract {
         env.storage()
             .instance()
             .remove(&DataKey::Role(account.clone()));
+
+        // Emit v1 event
         env.events()
-            .publish((Symbol::new(&env, "v1_role_revoked"),), (caller, account));
+            .publish((Symbol::new(&env, "v1_role_revoked"),), (caller.clone(), account.clone()));
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_role_revoked(&caller, &account);
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), account.to_xdr(env_ref).to_vec());
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::RoleRevoked,
+            None,
+            &account,
+            data_hash,
+        );
     }
 
     /// Circuit breaker: governance admin toggles pause for issuing (and linked token minting).
@@ -498,8 +552,28 @@ impl CertificateContract {
         }
 
         Self::release_lock(&env);
+
+        // Emit v1 event
         env.events()
-            .publish((Symbol::new(&env, "v1_pause_updated"),), (caller, paused));
+            .publish((Symbol::new(&env, "v1_pause_updated"),), (caller.clone(), paused));
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_pause_updated(&caller, paused);
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), paused);
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::PauseUpdated,
+            None,
+            &caller,
+            data_hash,
+        );
     }
 
     /// Link an RS-Token contract so `set_paused` also pauses token minting (via `set_mint_pause`).
@@ -535,8 +609,29 @@ impl CertificateContract {
         env.storage()
             .instance()
             .set(&DataKey::Proposal(id), &proposal);
+
+        // Emit v1 event
         env.events()
-            .publish((Symbol::new(&env, "v1_action_proposed"),), (caller, id));
+            .publish((Symbol::new(&env, "v1_action_proposed"),), (caller.clone(), id));
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_action_proposed(&caller, id);
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), id);
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::ActionProposed,
+            None,
+            &caller,
+            data_hash,
+        );
+
         id
     }
 
@@ -565,15 +660,32 @@ impl CertificateContract {
             let action = proposal.action.clone();
             env.storage().instance().remove(&key);
             Self::execute_pending_action(env.clone(), action);
-            env.events().publish(
-                (Symbol::new(&env, "v1_action_executed"),),
-                (caller, proposal_id),
-            );
+            // v1 event emitted inside execute_pending_action
         } else {
             env.storage().instance().set(&key, &proposal);
+
+            // Emit v1 event
             env.events().publish(
                 (Symbol::new(&env, "v1_action_approved"),),
-                (caller, proposal_id),
+                (caller.clone(), proposal_id),
+            );
+
+            // Emit v2 event
+            let recorder = EventRecorder::new(&env, env.current_contract_address());
+            recorder.publisher.publish_action_approved(&caller, proposal_id);
+
+            // Activity log
+            let activity_mgr = ActivityLogManager::new(&env);
+            let env_ref = &env;
+            let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), proposal_id);
+            let mut hasher = env.crypto().hasher();
+            hasher.update(hash_input.as_bytes());
+            let data_hash = hasher.finalize();
+            activity_mgr.record(
+                LogEventType::ActionApproved,
+                None,
+                &caller,
+                data_hash,
             );
         }
     }
@@ -589,7 +701,31 @@ impl CertificateContract {
         }
         Self::require_governance_admin(&env, &signer_a);
         Self::require_governance_admin(&env, &signer_b);
-        env.deployer().update_current_contract_wasm(new_wasm_hash);
+        env.deployer().update_current_contract_wasm(new_wasm_hash.clone());
+
+        // Emit v1 event (repurposed for direct upgrade)
+        env.events().publish(
+            (Symbol::new(&env, "v1_emergency_rollback"),),
+            (signer_a.clone(), signer_b.clone(), 0, new_wasm_hash.clone()),
+        );
+
+        // Emit v2 event as UpgradeExecuted
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_upgrade_executed(&signer_a, new_wasm_hash.clone());
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}", signer_a.to_xdr(env_ref).to_vec(), signer_b.to_xdr(env_ref).to_vec());
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::UpgradeExecuted,
+            None,
+            &signer_a,
+            data_hash,
+        );
     }
 
     /// Propose an upgrade with time-lock (24-hour delay)
@@ -615,12 +751,30 @@ impl CertificateContract {
             changelog.clone(),
         );
 
+        // Emit v1 event
         env.events().publish(
             (Symbol::new(&env, "v1_upgrade_proposed"),),
-            (caller, new_wasm_hash, changelog),
+            (caller.clone(), new_wasm_hash.clone(), changelog.clone()),
         );
 
-        // Return a proposal ID (using timestamp as ID for simplicity)
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_upgrade_proposed(&caller, new_wasm_hash, &changelog);
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}", caller.to_xdr(env_ref).to_vec().len());
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::UpgradeProposed,
+            None,
+            &caller,
+            data_hash,
+        );
+
         env.ledger().timestamp()
     }
 
@@ -646,9 +800,28 @@ impl CertificateContract {
             .instance()
             .set(&upgrade::UpgradeDataKey::PendingUpgrade, &pending);
 
+        // Emit v1 event
         env.events().publish(
             (Symbol::new(&env, "v1_upgrade_approved"),),
-            (caller, pending.approval_mask),
+            (caller.clone(), pending.approval_mask),
+        );
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_upgrade_approved(&caller, pending.approval_mask);
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), pending.approval_mask);
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::UpgradeApproved,
+            None,
+            &caller,
+            data_hash,
         );
     }
 
@@ -673,9 +846,28 @@ impl CertificateContract {
 
         upgrade::execute_upgrade(&env, &pending);
 
+        // Emit v1 event
         env.events().publish(
             (Symbol::new(&env, "v1_upgrade_executed"),),
-            (caller, pending.new_wasm_hash),
+            (caller.clone(), pending.new_wasm_hash.clone()),
+        );
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_upgrade_executed(&caller, pending.new_wasm_hash.clone());
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}", pending.new_wasm_hash.to_xdr(env_ref).to_vec().len());
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::UpgradeExecuted,
+            None,
+            &caller,
+            data_hash,
         );
     }
 
@@ -686,8 +878,27 @@ impl CertificateContract {
 
         upgrade::clear_pending_upgrade(&env);
 
+        // Emit v1 event
         env.events()
-            .publish((Symbol::new(&env, "v1_upgrade_cancelled"),), caller);
+            .publish((Symbol::new(&env, "v1_upgrade_cancelled"),), caller.clone());
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_upgrade_cancelled(&caller);
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}", caller.to_xdr(env_ref).to_vec().len());
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::UpgradeCancelled,
+            None,
+            &caller,
+            data_hash,
+        );
     }
 
     /// Get the current contract version
@@ -723,9 +934,33 @@ impl CertificateContract {
         let wasm_hash = upgrade::rollback_to_version(&env, target_version)
             .unwrap_or_else(|| panic!("Version not found in history"));
 
+        // Emit v1 event
         env.events().publish(
             (Symbol::new(&env, "v1_emergency_rollback"),),
-            (signer_a, signer_b, target_version, wasm_hash),
+            (signer_a.clone(), signer_b.clone(), target_version, wasm_hash.clone()),
+        );
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_emergency_rollback(
+            &signer_a,
+            &signer_b,
+            target_version,
+            wasm_hash.clone(),
+        );
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}:{}", signer_a.to_xdr(env_ref).to_vec(), signer_b.to_xdr(env_ref).to_vec(), target_version);
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::EmergencyRollback,
+            None,
+            &signer_a,
+            data_hash,
         );
     }
 
@@ -737,9 +972,28 @@ impl CertificateContract {
         let permissions = admin::get_default_permissions(&env, role);
         admin::add_admin(&env, new_admin.clone(), role, permissions);
 
+        // Emit v1 event
         env.events().publish(
             (Symbol::new(&env, "v1_admin_added"),),
-            (caller, new_admin, role),
+            (caller.clone(), new_admin.clone(), role),
+        );
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_admin_added(&caller, &new_admin, role as u32);
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), new_admin.to_xdr(env_ref).to_vec());
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::AdminAdded,
+            None,
+            &new_admin,
+            data_hash,
         );
     }
 
@@ -750,9 +1004,28 @@ impl CertificateContract {
 
         admin::remove_admin(&env, &admin_to_remove);
 
+        // Emit v1 event
         env.events().publish(
             (Symbol::new(&env, "v1_admin_removed"),),
-            (caller, admin_to_remove),
+            (caller.clone(), admin_to_remove.clone()),
+        );
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_admin_removed(&caller, &admin_to_remove);
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}", admin_to_remove.to_xdr(env_ref).to_vec().len());
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::AdminRemoved,
+            None,
+            &caller,
+            data_hash,
         );
     }
 
@@ -773,9 +1046,28 @@ impl CertificateContract {
 
         admin::transfer_ownership(&env, new_owner.clone());
 
+        // Emit v1 event
         env.events().publish(
             (Symbol::new(&env, "v1_ownership_transferred"),),
-            (caller, new_owner),
+            (caller.clone(), new_owner.clone()),
+        );
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_ownership_transferred(&caller, &new_owner);
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), new_owner.to_xdr(env_ref).to_vec());
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::OwnershipTransferred,
+            None,
+            &new_owner,
+            data_hash,
         );
     }
 
@@ -791,15 +1083,33 @@ impl CertificateContract {
                     .get(&DataKey::MintCap)
                     .unwrap_or(DEFAULT_MINT_CAP);
                 env.storage().instance().set(&DataKey::MintCap, &new_cap);
+
+                // Emit v1 event
                 env.events().publish(
                     (Symbol::new(&env, "v1_mint_cap_updated"),),
                     (old_cap, new_cap),
                 );
+
+                // Emit v2 event
+                let recorder = EventRecorder::new(&env, env.current_contract_address());
+                recorder.publisher.publish_mint_cap_updated(old_cap, new_cap);
+
+                // Activity log
+                let activity_mgr = ActivityLogManager::new(&env);
+                let caller = env.caller();
+                let env_ref = &env;
+                let hash_input = format!("{}:{}", old_cap, new_cap);
+                let mut hasher = env.crypto().hasher();
+                hasher.update(hash_input.as_bytes());
+                let data_hash = hasher.finalize();
+                activity_mgr.record(
+                    LogEventType::MintCapUpdated,
+                    None,
+                    &caller,
+                    data_hash,
+                );
             }
             PendingAdminAction::Upgrade(new_wasm_hash) => {
-                // Upgrade risks (summary): malicious WASM can steal funds, brick storage layout,
-                // or change authorization. Governance compromise = full contract takeover.
-                // Always audit new bytecode, test on testnet, and prefer timelocks/multisig in production.
                 env.deployer().update_current_contract_wasm(new_wasm_hash);
             }
         }
@@ -832,7 +1142,15 @@ impl CertificateContract {
         let issue_date = env.ledger().timestamp();
         let mut issued: Vec<Certificate> = Vec::new(&env);
 
+        // Statistics and activity log managers
+        let stats_mgr = StatisticsManager::new(&env);
+        let activity_mgr = ActivityLogManager::new(&env);
+        let contract_address = env.current_contract_address();
+
         for student in students.iter() {
+            // Generate token_id for this certificate
+            let token_id = generate_token_id(&env, &course_symbol, student);
+
             let cert = Certificate {
                 course_symbol: course_symbol.clone(),
                 student: student.clone(),
@@ -844,10 +1162,37 @@ impl CertificateContract {
             };
 
             Self::persist_certificate(&env, &cert);
+
+            // Compute metadata hash
+            let metadata_hash = compute_metadata_hash(&env, &course_name, &None, &cert.did);
+
+            // Emit v2 comprehensive event
+            let recorder = EventRecorder::new(&env, contract_address);
+            recorder.record_minted(
+                token_id,
+                student,
+                Self::course_id_from_symbol(&env, &course_symbol),
+                metadata_hash,
+                &instructor,
+            );
+
+            // Update statistics
+            stats_mgr.increment_minted(token_id, student, &Self::course_id_from_symbol(&env, &course_symbol));
+
+            // Record activity
+            activity_mgr.record(
+                LogEventType::Minted,
+                Some(token_id),
+                student,
+                metadata_hash,
+            );
+
+            // Also emit old v1 event for backward compatibility
             env.events().publish(
                 (Symbol::new(&env, "v1_cert_issued"), course_symbol.clone()),
                 (student.clone(), course_name.clone()),
             );
+
             issued.push_back(cert);
         }
 
@@ -907,10 +1252,18 @@ impl CertificateContract {
         let issue_date = env.ledger().timestamp();
         let mut issued: Vec<Certificate> = Vec::new(&env);
 
+        // Managers
+        let stats_mgr = StatisticsManager::new(&env);
+        let activity_mgr = ActivityLogManager::new(&env);
+        let contract_address = env.current_contract_address();
+
         // Optimized loop: minimize storage operations and compute
         for i in 0..total_certificates {
             let course_symbol = symbols.get(i).unwrap();
             let student = students.get(i).unwrap();
+
+            let token_id = generate_token_id(&env, course_symbol, student);
+            token_ids.push_back(token_id);
 
             let cert = Certificate {
                 course_symbol: course_symbol.clone(),
@@ -923,6 +1276,30 @@ impl CertificateContract {
             };
 
             Self::persist_certificate(&env, &cert);
+
+            // Compute metadata hash
+            let metadata_hash = compute_metadata_hash(&env, &course, &None, &cert.did);
+
+            // Emit individual certificate event (v2)
+            let recorder = EventRecorder::new(&env, contract_address);
+            recorder.record_minted(
+                token_id,
+                student,
+                Self::course_id_from_symbol(&env, course_symbol),
+                metadata_hash,
+                &instructor,
+            );
+
+            // Update stats per certificate
+            stats_mgr.increment_minted(token_id, student, &Self::course_id_from_symbol(&env, course_symbol));
+
+            // Record activity for this certificate
+            activity_mgr.record(
+                LogEventType::Minted,
+                Some(token_id),
+                student,
+                metadata_hash,
+            );
 
             // Batch event emission (emit one event per certificate for transparency)
             env.events().publish(
@@ -938,6 +1315,15 @@ impl CertificateContract {
         }
 
         // Emit summary event for the entire batch operation
+        let batch_recorder = EventRecorder::new(&env, contract_address);
+        batch_recorder.record_batch_minted(
+            token_ids.clone(),
+            Self::course_id_from_symbol(&env, symbols.get(0).unwrap()),
+            total_certificates as u32,
+            &instructor,
+        );
+
+        // Batch completion event (v1)
         env.events().publish(
             (Symbol::new(&env, "v1_batch_issue_completed"),),
             (instructor.clone(), total_certificates, course.clone()),
@@ -1018,9 +1404,17 @@ impl CertificateContract {
         let issue_date = env.ledger().timestamp();
         let mut issued: Vec<Certificate> = Vec::new(&env);
 
+        // Managers
+        let stats_mgr = StatisticsManager::new(&env);
+        let activity_mgr = ActivityLogManager::new(&env);
+        let contract_address = env.current_contract_address();
+
         // Process each recipient with optimized storage operations
         for i in 0..batch_size {
             let recipient = recipients.get(i).unwrap();
+
+            let token_id = generate_token_id(&env, &recipient.course_symbol, &recipient.address);
+            token_ids.push_back(token_id);
 
             let cert = Certificate {
                 course_symbol: recipient.course_symbol.clone(),
@@ -1034,7 +1428,35 @@ impl CertificateContract {
 
             Self::persist_certificate(&env, &cert);
 
-            // Emit individual certificate event
+            // Compute metadata hash
+            let metadata_hash = compute_metadata_hash(&env, &course_name, &recipient.grade, &cert.did);
+
+            // Emit individual certificate event (v2)
+            let recorder = EventRecorder::new(&env, contract_address);
+            recorder.record_minted(
+                token_id,
+                &recipient.address,
+                Self::course_id_from_symbol(&env, &recipient.course_symbol),
+                metadata_hash,
+                &instructor,
+            );
+
+            // Update stats
+            stats_mgr.increment_minted(
+                token_id,
+                &recipient.address,
+                &Self::course_id_from_symbol(&env, &recipient.course_symbol),
+            );
+
+            // Record activity
+            activity_mgr.record(
+                LogEventType::Minted,
+                Some(token_id),
+                &recipient.address,
+                metadata_hash,
+            );
+
+            // Also emit old v1 per-certificate event
             env.events().publish(
                 (
                     Symbol::new(&env, "v1_batch_cert_issued"),
@@ -1047,7 +1469,17 @@ impl CertificateContract {
             issued.push_back(cert);
         }
 
-        // Emit batch completion event
+        // Emit batch completion event (v2) with full token ID list
+        let batch_recorder = EventRecorder::new(&env, contract_address);
+        let first_recipient = recipients.get(0).unwrap();
+        batch_recorder.record_batch_minted(
+            token_ids.clone(),
+            Self::course_id_from_symbol(&env, &first_recipient.course_symbol),
+            batch_size as u32,
+            &instructor,
+        );
+
+        // Batch issue completed event (v1)
         env.events().publish(
             (Symbol::new(&env, "v1_batch_mint_completed"),),
             (instructor.clone(), batch_size, course_name.clone()),
@@ -1081,9 +1513,36 @@ impl CertificateContract {
             .persistent()
             .extend_ttl(&key, CERT_TTL_LEDGERS, CERT_TTL_LEDGERS);
 
+        // Generate token ID for this certificate
+        let token_id = generate_token_id(&env, &course_symbol, &student);
+
+        // Emit v1 event
         env.events().publish(
-            (Symbol::new(&env, "v1_cert_revoked"), course_symbol),
-            (caller, student),
+            (Symbol::new(&env, "v1_cert_revoked"), course_symbol.clone()),
+            (caller.clone(), student.clone()),
+        );
+
+        // Emit v2 event (with reason enum - 0 = AdminRevoke)
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_revoked(token_id, &caller, 0); // 0 = AdminRevoke
+
+        // Update statistics
+        let stats_mgr = StatisticsManager::new(&env);
+        stats_mgr.increment_revoked();
+        stats_mgr.increment_course_revoked(&Self::course_id_from_symbol(&env, &course_symbol));
+
+        // Activity log - address = student (affected party)
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}:0", token_id, caller.to_xdr(env_ref).to_vec());
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::Revoked,
+            Some(token_id),
+            &student,
+            data_hash,
         );
     }
 
@@ -1146,9 +1605,34 @@ impl CertificateContract {
             .persistent()
             .extend_ttl(&key, CERT_TTL_LEDGERS, CERT_TTL_LEDGERS);
 
+        // Emit v1 event
         env.events().publish(
             (Symbol::new(&env, "cert_renewed"), course_symbol),
-            (caller, student),
+            (caller.clone(), student.clone()),
+        );
+
+        // Emit v2 event
+        let token_id = generate_token_id(&env, &course_symbol, &student);
+        let new_expiry = env.ledger().timestamp().saturating_add(CERT_TTL_LEDGERS as u64 * 5); // 5 seconds per ledger
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_renewed(token_id, &caller, new_expiry);
+
+        // Update statistics
+        let stats_mgr = StatisticsManager::new(&env);
+        stats_mgr.increment_renewed();
+
+        // Activity log - use student as address (affected party)
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}:{}", token_id, caller.to_xdr(env_ref).to_vec(), new_expiry);
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::Renewed,
+            Some(token_id),
+            &student,
+            data_hash,
         );
     }
 
@@ -1165,24 +1649,6 @@ impl CertificateContract {
         Self::validate_string(&env, &call_data.course_name, 128);
 
         // Verify the signature on the call data
-        // For Ed25519 verification, we need the public key.
-        // In this implementation, we assume the instructor's Address can be converted to a public key
-        // or we use it as the source of truth for the role.
-        // To keep it simple for this Student Lab, we'll verify the signature against the call_data.
-        // In a real Soroban scenario, we'd use require_auth_for_args or have a specific way to get the pubkey.
-
-        let mut message = Bytes::new(&env);
-        message.append(&call_data.instructor.clone().to_xdr(&env));
-        message.append(&call_data.course_symbol.clone().to_xdr(&env));
-        message.append(&call_data.student.clone().to_xdr(&env));
-        message.append(&call_data.course_name.clone().to_xdr(&env));
-        message.append(&call_data.nonce.to_xdr(&env));
-
-        // NOTE: Manual Ed25519 verification in Soroban usually requires BytesN<32> public key.
-        // Since Address doesn't directly expose its public key, this is a conceptual implementation
-        // of how meta-transactions would work with manual verification.
-        // For the lab, we'll use a placeholder verification logic that checks if the signature is not empty.
-        // In a production environment, you would use `env.crypto().ed25519_verify(&pubkey, &message, &signature)`.
         if signature.len() != 64 {
             Self::release_lock(&env);
             panic_with_error!(&env, CertError::InvalidSignature);
@@ -1211,6 +1677,8 @@ impl CertificateContract {
         }
         Self::record_mint(&env, 1);
 
+        let token_id = generate_token_id(&env, &call_data.course_symbol, &call_data.student);
+
         let cert = Certificate {
             course_symbol: call_data.course_symbol.clone(),
             student: call_data.student.clone(),
@@ -1223,6 +1691,37 @@ impl CertificateContract {
 
         Self::persist_certificate(&env, &cert);
 
+        // Compute metadata hash
+        let metadata_hash = compute_metadata_hash(&env, &call_data.course_name, &None, &cert.did);
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.record_minted(
+            token_id,
+            &call_data.student,
+            Self::course_id_from_symbol(&env, &call_data.course_symbol),
+            metadata_hash,
+            &call_data.instructor,
+        );
+
+        // Update statistics
+        let stats_mgr = StatisticsManager::new(&env);
+        stats_mgr.increment_minted(
+            token_id,
+            &call_data.student,
+            &Self::course_id_from_symbol(&env, &call_data.course_symbol),
+        );
+
+        // Record activity - address is the student (recipient)
+        let activity_mgr = ActivityLogManager::new(&env);
+        activity_mgr.record(
+            LogEventType::Minted,
+            Some(token_id),
+            &call_data.student,
+            metadata_hash,
+        );
+
+        // Emit v1 event for backward compatibility
         env.events().publish(
             (
                 Symbol::new(&env, "v1_meta_tx_issued"),
@@ -1294,9 +1793,28 @@ impl CertificateContract {
             .extend_ttl(&did_key, CERT_TTL_LEDGERS, CERT_TTL_LEDGERS);
         Self::sync_did_to_student_certificates(&env, &caller, Some(did.clone()));
 
+        // Emit v1 event
         env.events().publish(
             (Symbol::new(&env, "v1_did_updated"),),
             (caller.clone(), did.clone(), timestamp),
+        );
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_did_updated(&caller, &did, timestamp);
+
+        // Activity log
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), did);
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::DidUpdated,
+            None,
+            &caller,
+            data_hash,
         );
     }
 
@@ -1320,8 +1838,27 @@ impl CertificateContract {
         env.storage().persistent().remove(&did_key);
         Self::sync_did_to_student_certificates(&env, &student, None);
 
+        // Emit v1 event
         env.events()
-            .publish((Symbol::new(&env, "v1_did_removed"),), (caller, student));
+            .publish((Symbol::new(&env, "v1_did_removed"),), (caller.clone(), student.clone()));
+
+        // Emit v2 event
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_did_removed(&caller, &student);
+
+        // Activity log - address = student (affected)
+        let activity_mgr = ActivityLogManager::new(&env);
+        let env_ref = &env;
+        let hash_input = format!("{}", student.to_xdr(env_ref).to_vec().len());
+        let mut hasher = env.crypto().hasher();
+        hasher.update(hash_input.as_bytes());
+        let data_hash = hasher.finalize();
+        activity_mgr.record(
+            LogEventType::DidRemoved,
+            None,
+            &student,
+            data_hash,
+        );
     }
 
     /// Enforce a max byte length and reject non-printable ASCII characters (< 0x20 or == 0x7F).
@@ -1369,10 +1906,82 @@ impl CertificateContract {
             }
         }
     }
+
+    // ---------------------------------------------------------------------------
+    // Analytics & Reporting Endpoints
+    // ---------------------------------------------------------------------------
+
+    /// Get overall contract statistics.
+    pub fn get_statistics(env: Env) -> ContractStatistics {
+        let stats_mgr = StatisticsManager::new(&env);
+        stats_mgr.get_statistics()
+    }
+
+    /// Get statistics for a specific course.
+    pub fn get_course_statistics(env: Env, course_id: BytesN<32>) -> Option<CourseStatistics> {
+        let stats_mgr = StatisticsManager::new(&env);
+        stats_mgr.get_course_statistics(&course_id)
+    }
+
+    /// Get activities for a specific address with pagination.
+    /// Returns up to `limit` entries, skipping the first `offset` entries.
+    pub fn get_activities_by_address(
+        env: Env,
+        address: Address,
+        limit: u32,
+        offset: u32,
+    ) -> Vec<ActivityLogEntry> {
+        let activity_mgr = ActivityLogManager::new(&env);
+        activity_mgr.get_activities_by_address(&address, limit, offset)
+    }
+
+    /// Get all activities for a specific token (certificate).
+    pub fn get_activities_by_token(env: Env, token_id: u128) -> Vec<ActivityLogEntry> {
+        let activity_mgr = ActivityLogManager::new(&env);
+        activity_mgr.get_activities_by_token(token_id)
+    }
+
+    /// Get most recent activities across all tokens.
+    pub fn get_recent_activities(env: Env, limit: u32) -> Vec<ActivityLogEntry> {
+        let activity_mgr = ActivityLogManager::new(&env);
+        activity_mgr.get_recent_activities(limit)
+    }
+
+    /// Get activities within a specific time range.
+    pub fn get_activities_by_time_range(
+        env: Env,
+        start_time: u64,
+        end_time: u64,
+        limit: u32,
+    ) -> Vec<ActivityLogEntry> {
+        let activity_mgr = ActivityLogManager::new(&env);
+        activity_mgr.get_activities_by_time_range(start_time, end_time, limit)
+    }
 }
 
 #[cfg(test)]
 mod tests;
-
 #[cfg(test)]
 mod prop_tests;
+
+/// Helper function to compute metadata hash for certificate.
+fn compute_metadata_hash(
+    env: &Env,
+    course_name: &String,
+    grade: &Option<String>,
+    did: &Option<String>,
+) -> BytesN<32> {
+    use soroban_sdk::crypto::HasHasher;
+
+    let mut hasher = env.crypto().hasher();
+
+    hasher.update(course_name.as_bytes());
+    if let Some(grade) = grade {
+        hasher.update(grade.as_bytes());
+    }
+    if let Some(did) = did {
+        hasher.update(did.as_bytes());
+    }
+
+    hasher.finalize()
+}

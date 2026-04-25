@@ -1359,7 +1359,6 @@ fn lock_is_released_after_mint_batch_certificates() {
     client.mint_batch_certificates(&instructor, &recipients2, &course_name);
 }
 
-// ---------------------------------------------------------------------------
 // Versioned events
 // ---------------------------------------------------------------------------
 
@@ -1368,6 +1367,13 @@ fn get_event_version_returns_one() {
     let (_env, _a, _b, _c, client) = setup();
     assert_eq!(client.get_event_version(), 1u32);
 }
+
+// ---------------------------------------------------------------------------
+// New Comprehensive Event System Tests
+// ---------------------------------------------------------------------------
+
+mod events_test;
+mod activity_log_test;
 
 // ---------------------------------------------------------------------------
 // Upgrade and Admin Tests
