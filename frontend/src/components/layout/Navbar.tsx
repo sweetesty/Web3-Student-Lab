@@ -1,9 +1,9 @@
 "use client";
 
+import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -16,6 +16,7 @@ export default function Navbar() {
     { name: "MODULES", path: "/courses" },
     { name: "ROADMAP", path: "/roadmap" },
     { name: "PLAYGROUND", path: "/playground" },
+    { name: "REVIEWS", path: "/peer-review" },
     { name: "SIMULATOR", path: "/simulator" },
     { name: "IDEAS", path: "/ideas" },
     { name: "VERIFY", path: "/verify" },
