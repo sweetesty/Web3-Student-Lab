@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/api-client";
+import { ListSkeleton } from "../ui/skeletons/ListSkeleton";
 
 interface AuditLog {
   id: string;
@@ -33,7 +34,7 @@ export default function AuditLogList() {
   }, []);
 
   if (isLoading) {
-    return <div className="text-gray-500 animate-pulse">Loading audit trails...</div>;
+    return <ListSkeleton count={3} />;
   }
 
   if (logs.length === 0) {

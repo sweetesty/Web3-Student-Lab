@@ -2,6 +2,8 @@
 
 import { NetworkGraph } from "@/components/simulator/NetworkGraph";
 import { useEffect, useState } from "react";
+import { WithSkeleton } from "@/components/ui/WithSkeleton";
+import { GraphSkeleton } from "@/components/ui/skeletons/GraphSkeleton";
 
 
 interface Transaction {
@@ -25,6 +27,12 @@ export default function SimulatorPage() {
   const [ledgers, setLedgers] = useState<Ledger[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLive, setIsLive] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitializing(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
   // const scrollRef = useRef<HTMLDivElement>(null); // Reserved for future scroll functionality
 
   // Generate fake live data
@@ -146,8 +154,13 @@ export default function SimulatorPage() {
           </div>
 
           {/* Network Graph Visualizer */}
-          <div className="lg:col-span-2 flex flex-col h-full">
-            <NetworkGraph transactions={transactions} />
+          <div className="lg:col-span-2 flex flex-col h-full relative">
+            <WithSkeleton 
+              isLoading={isInitializing} 
+              skeleton={<GraphSkeleton />}
+            >
+              <NetworkGraph transactions={transactions} />
+            </WithSkeleton>
           </div>
 
           {/* Live Transaction Stream */}

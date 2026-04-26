@@ -12,6 +12,8 @@ import {
 } from "@/lib/api";
 import Link from "next/link";
 import AuditLogList from "@/components/dashboard/AuditLogList";
+import { WithSkeleton } from "@/components/ui/WithSkeleton";
+import { StatCardSkeleton, CourseCardSkeleton, CertCardSkeleton } from "@/components/ui/skeletons/CardSkeleton";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -58,18 +60,6 @@ export default function DashboardPage() {
     loadDashboard();
   }, [user]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            Loading dashboard...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-red-600 selection:text-white pb-20 relative overflow-hidden">
@@ -126,6 +116,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Grid */}
+        <WithSkeleton
+          isLoading={isLoading}
+          skeleton={
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+          }
+        >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           <div className="bg-zinc-950 border border-white/10 rounded-2xl p-6 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.1)] transition-all group relative overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-3xl group-hover:bg-red-500/10 transition-colors"></div>
@@ -235,6 +236,7 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
+        </WithSkeleton>
 
         {/* Recent Courses */}
         <div className="mb-16">
@@ -253,6 +255,16 @@ export default function DashboardPage() {
               </span>
             </Link>
           </div>
+          <WithSkeleton
+            isLoading={isLoading}
+            skeleton={
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <CourseCardSkeleton />
+                <CourseCardSkeleton />
+                <CourseCardSkeleton />
+              </div>
+            }
+          >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.slice(0, 3).map((course) => (
               <Link
@@ -278,10 +290,11 @@ export default function DashboardPage() {
               </Link>
             ))}
           </div>
+          </WithSkeleton>
         </div>
 
         {/* My Certificates */}
-        {certificates.length > 0 && (
+        {(isLoading || certificates.length > 0) && (
           <div className="mb-16">
             <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
               <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center gap-3">
@@ -298,6 +311,17 @@ export default function DashboardPage() {
                 </span>
               </Link>
             </div>
+            </div>
+            <WithSkeleton
+              isLoading={isLoading}
+              skeleton={
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <CertCardSkeleton />
+                  <CertCardSkeleton />
+                  <CertCardSkeleton />
+                </div>
+              }
+            >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {certificates.slice(0, 3).map((cert) => (
                 <Link
@@ -335,6 +359,7 @@ export default function DashboardPage() {
                 </Link>
               ))}
             </div>
+            </WithSkeleton>
           </div>
         )}
 

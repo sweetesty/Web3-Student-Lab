@@ -75,3 +75,27 @@ html {
 .active\:scale-98:active {
   transform: scale(0.98);
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: #18181b;
+  background-image: linear-gradient(
+    to right,
+    #18181b 0%,
+    #27272a 20%,
+    #18181b 40%,
+    #18181b 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 1000px 100%;
+}
+
