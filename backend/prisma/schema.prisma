@@ -150,6 +150,19 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+model AuthNonce {
+  id            String   @id @default(cuid())
+  walletAddress String
+  nonce         String   @unique
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("auth_nonces")
+  @@index([walletAddress])
+  @@index([expiresAt])
+}
+
 model AnalyticsData {
   id                String   @id @default(cuid())
   metricType        String   // "USER_STAT", "COURSE_STAT", "ENROLLMENT_STAT"

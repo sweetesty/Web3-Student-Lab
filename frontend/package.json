@@ -11,14 +11,16 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@metamask/detect-provider": "^2.0.0",
     "@monaco-editor/react": "^4.7.0",
     "@stellar/stellar-sdk": "^14.6.1",
     "axios": "^1.13.6",
     "bignumber.js": "^10.0.2",
-    "nanoid": "^5.1.9",
     "d3": "^7.9.0",
+    "ethers": "^6.16.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.9.0",
+    "nanoid": "^5.1.9",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
