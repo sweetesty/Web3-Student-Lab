@@ -296,6 +296,17 @@ export const updateStudentProgress = async (
   const completedLessonSet = new Set(existingProgress.completedLessons);
 
   if (input.status === 'completed') {
+    if (!completedLessonSet.has(input.lessonId)) {
+      // Log individual lesson completion activity
+      (prisma as any).studentActivity.create({
+        data: {
+          studentId,
+          courseId,
+          lessonId: input.lessonId,
+          action: 'COMPLETED_LESSON',
+        }
+      }).catch((err: any) => console.warn('Failed to log student activity:', err));
+    }
     completedLessonSet.add(input.lessonId);
   } else {
     completedLessonSet.delete(input.lessonId);

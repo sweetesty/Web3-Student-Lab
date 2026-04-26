@@ -12,12 +12,13 @@ import {
 } from "@/lib/api";
 import Link from "next/link";
 import AuditLogList from "@/components/dashboard/AuditLogList";
+import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [_enrollments, setEnrollments] = useState<Enrollment[]>([]); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [, setEnrollments] = useState<Enrollment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
     totalCourses: 0,
@@ -42,10 +43,14 @@ export default function DashboardPage() {
         setCertificates(certificatesData);
         setEnrollments(enrollmentsData);
 
+        const completedCount = enrollmentsData.filter(
+          (e: Enrollment) => e.status === "completed",
+        ).length;
+
         setStats({
           totalCourses: coursesData.length,
           enrolledCourses: enrollmentsData.length,
-          completedCourses: certificatesData.length,
+          completedCourses: completedCount,
           certificates: certificatesData.length,
         });
       } catch (error) {
@@ -60,12 +65,49 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            Loading dashboard...
+          <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <p className="text-gray-500 font-mono text-sm uppercase tracking-widest animate-pulse">
+            Establishing Uplink...
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-center border border-red-500/20 p-12 rounded-3xl bg-zinc-950 shadow-[0_0_50px_rgba(220,38,38,0.1)]">
+          <div className="w-20 h-20 bg-red-600/10 border border-red-600/30 rounded-2xl flex items-center justify-center mx-auto mb-8">
+            <svg
+              className="w-10 h-10 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2zm-10 0V7a3 3 0 00-3-3 3 3 0 00-3 3v8h6z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">
+            Access Denied
+          </h2>
+          <p className="text-gray-400 font-light mb-8 max-w-xs mx-auto">
+            Operator credentials not detected. Authentication required to access
+            terminal metrics.
+          </p>
+          <Link
+            href="/login"
+            className="px-8 py-3 bg-red-600 text-white font-black uppercase tracking-widest rounded-xl hover:bg-red-700 hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] transition-all"
+          >
+            Authenticate
+          </Link>
         </div>
       </div>
     );
@@ -234,6 +276,11 @@ export default function DashboardPage() {
               Cryptographic Tokens
             </p>
           </div>
+        </div>
+
+        {/* Activity Heatmap */}
+        <div className="mb-16">
+          <ActivityHeatmap />
         </div>
 
         {/* Recent Courses */}

@@ -15,6 +15,7 @@ import searchRoutes from './search/search.routes.js';
 import studentsRouter from './students.js';
 import webhookRouter from './webhooks.js';
 
+import activityRouter from './activity.routes.js';
 import analyticsRouter from './analytics.routes.js';
 import securityRouter from './security.routes.js';
 
@@ -34,6 +35,7 @@ router.use('/learning', learningRoutes);
 router.use('/generator', generatorRoutes);
 router.use('/search', searchRoutes);
 router.use('/user', userRouter);
+router.use('/activity', activityRouter);
 router.use('/audit', auditRouter);
 router.use('/export', exportRouter);
 

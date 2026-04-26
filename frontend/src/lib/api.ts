@@ -237,3 +237,21 @@ export const analyticsAPI = {
     return response.data;
   },
 };
+// Activity APIs
+export interface ActivityEntry {
+  date: string;
+  count: number;
+  labs?: string[];
+}
+
+export interface ActivityResponse {
+  activities: ActivityEntry[];
+  classAverage: ActivityEntry[];
+}
+
+export const activityAPI = {
+  getStudentActivity: async (): Promise<ActivityResponse> => {
+    const response = await apiClient.get("/activity");
+    return response.data;
+  },
+};

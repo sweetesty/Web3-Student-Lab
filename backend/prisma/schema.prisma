@@ -26,6 +26,7 @@ model Student {
   certificates  Certificate[]
   feedback      Feedback[]
   learningProgress LearningProgress[]
+  activities       StudentActivity[]
 
   @@map("students")
   @@index([firstName, lastName])
@@ -161,4 +162,19 @@ model AnalyticsData {
   metadata          Json?
 
   @@map("analytics_data")
+}
+
+model StudentActivity {
+  id        String   @id @default(cuid())
+  studentId String
+  courseId  String
+  lessonId  String
+  action    String   @default("COMPLETED_LESSON")
+  timestamp DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("student_activities")
+  @@index([studentId])
+  @@index([timestamp])
 }
