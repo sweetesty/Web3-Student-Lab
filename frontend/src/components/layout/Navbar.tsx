@@ -102,6 +102,7 @@ rent={isActive("/dashboard") ? "page" : undefined}
                 >
                   VAULT
                 </Link>
+                <NotificationBell />
                 <button
                   onClick={logout}
                   aria-label="Logout from your account"

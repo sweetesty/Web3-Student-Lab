@@ -1,9 +1,15 @@
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+>>>>>>> origin/main
+import { AuthProvider } from "@/contexts/AuthContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+=======
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+>>>>>>> origin/main
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,6 +28,8 @@ export const metadata: Metadata = {
 };
 
 import Navbar from "@/components/layout/Navbar";
+import { ToastContainer } from "@/components/notifications/ToastContainer";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 export default function RootLayout({
   children,
@@ -59,11 +67,19 @@ export default function RootLayout({
           </AuthProvider>
         </ThemeProvider>
         <AuthProvider>
+<<<<<<< HEAD
+          <NotificationProvider>
+            <Navbar />
+            <main className="flex-grow">{children}</main>
+            <ToastContainer />
+          </NotificationProvider>
+=======
           <a href="#main-content" className="skip-to-content">
             Skip to main content
           </a>
           <Navbar />
           <main id="main-content" className="flex-grow">{children}</main>
+>>>>>>> origin/main
         </AuthProvider>
       </body>
     </html>
