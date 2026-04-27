@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/api-client";
+import { ListSkeleton } from "../ui/skeletons/ListSkeleton";
 
 interface AuditLog {
   id: string;
@@ -9,7 +10,7 @@ interface AuditLog {
   action: string;
   entity: string | null;
   entityId: string | null;
-  details: unknown;
+  details: any;
   createdAt: string;
 }
 
@@ -33,52 +34,41 @@ export default function AuditLogList() {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="animate-pulse text-gray-500">Loading audit trails...</div>
-    );
+    return <ListSkeleton count={3} />;
   }
 
   if (logs.length === 0) {
     return (
-      <div className="text-gray-500 font-light italic">
+      <div className="text-text-secondary font-light italic">
         No administrative actions recorded in the current session.
       </div>
     );
   }
 
   return (
-    <div className="min-w-0 space-y-4">
+    <div className="space-y-4">
       {logs.map((log) => (
-        <div
-          key={log.id}
-          className="group min-w-0 rounded-lg border border-white/5 bg-black p-4 transition-colors hover:border-red-500/20"
+        <div 
+          key={log.id} 
+          className="bg-background border border-border-theme/50 p-4 rounded-lg hover:border-red-500/20 transition-colors group"
         >
-          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-            <span className="min-w-0 break-words text-xs font-black uppercase tracking-widest text-red-500">
-              {log.action.replace(/_/g, " ")}
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-xs font-black text-red-500 uppercase tracking-widest">
+              {log.action.replace(/_/g, ' ')}
             </span>
-            <span className="font-mono text-[10px] text-gray-600">
+            <span className="text-[10px] font-mono text-text-secondary">
               {new Date(log.createdAt).toLocaleString()}
             </span>
           </div>
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="min-w-0 break-words text-sm text-gray-300">
-              <span className="mr-2 text-[10px] font-bold uppercase text-gray-500">
-                Operator:
-              </span>
-              {log.userEmail || "System"}
+          <div className="flex flex-col gap-1">
+            <p className="text-sm text-foreground">
+              <span className="text-text-secondary font-bold uppercase text-[10px] mr-2">Operator:</span>
+              {log.userEmail || 'System'}
             </p>
             {log.entity && (
-              <p className="min-w-0 break-words text-sm text-gray-300">
-                <span className="mr-2 text-[10px] font-bold uppercase text-gray-500">
-                  Entity:
-                </span>
-                {log.entity}{" "}
-                {log.entityId && (
-                  <span className="font-mono text-xs text-gray-600">
-                    ({log.entityId})
-                  </span>
-                )}
+              <p className="text-sm text-foreground">
+                <span className="text-text-secondary font-bold uppercase text-[10px] mr-2">Entity:</span>
+                {log.entity} {log.entityId && <span className="text-text-secondary font-mono text-xs">({log.entityId})</span>}
               </p>
             )}
           </div>

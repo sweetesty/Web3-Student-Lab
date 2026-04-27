@@ -1,79 +1,84 @@
 "use client";
 
 import { CodeEditor } from "@/components/playground/CodeEditor";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { WithSkeleton } from "@/components/ui/WithSkeleton";
+import { EditorSkeleton } from "@/components/ui/skeletons/EditorSkeleton";
+
 
 export default function PlaygroundPage() {
+
   const [output, setOutput] = useState("");
   const [isCompiling, setIsCompiling] = useState(false);
-  const [isMobileEditorMode, setIsMobileEditorMode] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitializing(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCompile = () => {
     setIsCompiling(true);
+    // Simulate compilation delay
     setTimeout(() => {
       setOutput(
-        "Compilation successful!\nWASM size: 4.2KB\nContract ready for simulation.",
+        "✅ Compilation successful!\n📦 WASM size: 4.2KB\n🚀 Contract ready for simulation.",
       );
       setIsCompiling(false);
     }, 1500);
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] overflow-x-hidden bg-black p-4 font-mono text-white sm:p-6 md:p-12">
-      <div className="mx-auto flex h-full max-w-7xl flex-col">
-        <div className="mb-8 flex flex-col justify-between gap-4 border-b border-white/10 pb-6 md:mb-12 md:flex-row md:items-end">
-          <div className="min-w-0">
-            <h1 className="mb-2 text-3xl font-black uppercase tracking-tighter sm:text-4xl">
+    <div className="min-h-[calc(100vh-80px)] bg-black text-white p-6 md:p-12 font-mono">
+      <div className="max-w-7xl mx-auto h-full flex flex-col">
+        <div className="mb-12 border-b border-white/10 pb-6 flex justify-between items-end">
+          <div>
+            <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">
               Soroban <span className="text-red-500">Playground</span>
             </h1>
-            <p className="text-xs uppercase tracking-widest text-gray-500">
+            <p className="text-xs text-gray-500 uppercase tracking-widest">
               Experimental Smart Contract Runtime v1.0.4
             </p>
           </div>
-          <div className="hidden text-right md:block">
-            <span className="animate-pulse text-[10px] font-bold uppercase tracking-widest text-green-500">
-              Network Active: Stellar Testnet
+          <div className="text-right hidden md:block">
+            <span className="text-[10px] text-green-500 font-bold uppercase tracking-widest animate-pulse">
+              ● Network Active: Stellar Testnet
             </span>
           </div>
         </div>
 
-        <div className="grid flex-grow grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(20rem,0.92fr)] xl:gap-12">
-          <div className="relative flex min-h-[32rem] min-w-0 flex-col rounded-xl border border-white/10 bg-zinc-950 p-4 shadow-2xl sm:p-6 xl:min-h-[600px] xl:p-8">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-4">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                <div className="h-3 w-3 rounded-full bg-zinc-700"></div>
-                <div className="h-3 w-3 rounded-full bg-zinc-700"></div>
-                <span className="ml-2 truncate text-[10px] font-bold uppercase tracking-widest text-gray-500 sm:ml-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 flex-grow">
+          {/* Editor Placeholder */}
+          <div className="bg-zinc-950 border border-white/10 rounded-3xl p-8 shadow-2xl relative flex flex-col min-h-[600px]">
+            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4 justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-zinc-700"></div>
+                <div className="w-3 h-3 rounded-full bg-zinc-700"></div>
+                <span className="ml-4 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
                   contract.rs
                 </span>
               </div>
-              <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-red-600/20 bg-red-600/10 px-3 text-[9px] font-black uppercase tracking-widest text-red-500">
-                <input
-                  type="checkbox"
-                  checked={isMobileEditorMode}
-                  onChange={(event) =>
-                    setIsMobileEditorMode(event.target.checked)
-                  }
-                  className="h-4 w-4 accent-red-600"
-                />
-                Mobile-Friendly
-              </label>
+              <div className="flex items-center gap-2 bg-red-600/10 px-3 py-1 rounded-full border border-red-600/20">
+                <span className="text-[9px] font-black uppercase text-red-500 tracking-widest">Collaborative Mode</span>
+              </div>
             </div>
 
-            <div className="flex min-h-0 flex-grow flex-col overflow-hidden rounded-xl border border-white/5">
-              <CodeEditor
-                roomName="main-lab-session"
-                mobileMode={isMobileEditorMode}
-              />
+            <div className="flex-grow flex flex-col overflow-hidden rounded-xl border border-white/5 relative">
+              <WithSkeleton
+                isLoading={isInitializing}
+                skeleton={<EditorSkeleton />}
+              >
+                <CodeEditor roomName="main-lab-session" />
+              </WithSkeleton>
             </div>
 
             <button
               onClick={handleCompile}
               disabled={isCompiling}
-              className={`mt-4 min-h-12 rounded-xl py-4 text-xs font-black uppercase tracking-[0.2em] transition-all ${
+              className={`mt-4 py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all ${
                 isCompiling
-                  ? "cursor-not-allowed bg-zinc-800 text-gray-500"
+                  ? "bg-zinc-800 text-gray-500 cursor-not-allowed"
                   : "bg-red-600 text-white hover:bg-red-500 active:scale-[0.98]"
               }`}
             >
@@ -81,23 +86,24 @@ export default function PlaygroundPage() {
             </button>
           </div>
 
-          <div className="flex min-w-0 flex-col gap-6">
-            <div className="group relative min-h-64 flex-grow overflow-hidden rounded-xl border border-white/10 bg-black p-5 shadow-inner sm:p-8">
-              <div className="absolute left-0 top-0 h-1 w-full bg-red-600/30"></div>
-              <h3 className="mb-6 text-[10px] font-black uppercase tracking-widest text-gray-600">
+          {/* Terminal Output */}
+          <div className="flex flex-col gap-6">
+            <div className="bg-black border border-white/10 rounded-3xl p-8 flex-grow shadow-inner relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-1 bg-red-600/30"></div>
+              <h3 className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-6">
                 Execution_Output
               </h3>
-              <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-loose text-red-500/80">
+              <pre className="text-xs text-red-500/80 leading-loose whitespace-pre-wrap font-mono">
                 {output ||
                   "> Initializing environment...\n> Awaiting input signal..."}
               </pre>
               {isCompiling && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-all">
+                <div className="absolute inset-0 bg-black/80 flex items-center justify-center backdrop-blur-sm transition-all">
                   <div className="flex flex-col items-center">
-                    <div className="mb-4 h-1 w-12 overflow-hidden rounded-full bg-zinc-800">
-                      <div className="h-full w-1/2 animate-[loading_1s_infinite] bg-red-600"></div>
+                    <div className="w-12 h-1 bg-zinc-800 rounded-full mb-4 overflow-hidden">
+                      <div className="w-1/2 h-full bg-red-600 animate-[loading_1s_infinite]"></div>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                    <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">
                       Processing WASM Bytecode
                     </span>
                   </div>
@@ -105,11 +111,11 @@ export default function PlaygroundPage() {
               )}
             </div>
 
-            <div className="rounded-xl border border-white/5 bg-zinc-950 p-5 sm:p-8">
-              <h4 className="mb-4 text-[10px] font-black uppercase tracking-widest text-white">
+            <div className="bg-zinc-950 border border-white/5 p-8 rounded-3xl">
+              <h4 className="text-[10px] font-black text-white uppercase tracking-widest mb-4">
                 Laboratory Notes
               </h4>
-              <p className="text-[11px] font-light leading-relaxed text-gray-500">
+              <p className="text-[11px] text-gray-500 leading-relaxed font-light">
                 This playground provides a{" "}
                 <span className="text-white">real-time transpilation</span>{" "}
                 environment for Soroban logic. Validated code can be deployed to

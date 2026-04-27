@@ -1,38 +1,24 @@
 "use client";
 
 import AuditLogList from "@/components/dashboard/AuditLogList";
+import LayoutGrid from "@/components/dashboard/LayoutGrid";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLayoutPersistence } from "@/hooks/useLayoutPersistence";
 import {
-  Certificate,
-  Course,
-  Enrollment,
-  certificatesAPI,
-  coursesAPI,
-  enrollmentsAPI,
+    Certificate,
+    certificatesAPI,
+    Course,
+    coursesAPI,
+    Enrollment,
+    enrollmentsAPI,
 } from "@/lib/api";
-import {
-  Award,
-  BookOpen,
-  ChevronRight,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Route,
-  ShieldCheck,
-  X,
-} from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
-
-const sidebarLinks = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/courses", label: "Courses", icon: BookOpen },
-  { href: "/certificates", label: "Credentials", icon: Award },
-  { href: "/simulator", label: "Simulator", icon: Route },
-];
+import AuditLogList from "@/components/dashboard/AuditLogList";
+import { WithSkeleton } from "@/components/ui/WithSkeleton";
+import { StatCardSkeleton, CourseCardSkeleton, CertCardSkeleton } from "@/components/ui/skeletons/CardSkeleton";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -40,14 +26,15 @@ export default function DashboardPage() {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [_enrollments, setEnrollments] = useState<Enrollment[]>([]); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [isLoading, setIsLoading] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [stats, setStats] = useState({
     totalCourses: 0,
     enrolledCourses: 0,
     completedCourses: 0,
     certificates: 0,
   });
+
+  const { layout, saveLayout, resetLayout } = useLayoutPersistence(user?.id);
 
   useEffect(() => {
     async function loadDashboard() {
@@ -81,346 +68,519 @@ export default function DashboardPage() {
     loadDashboard();
   }, [user]);
 
-  const statCards = useMemo(
-    () => [
-      {
-        label: "Available Nodes",
-        value: stats.totalCourses,
-        icon: BookOpen,
-      },
-      {
-        label: "Active Uplinks",
-        value: stats.enrolledCourses,
-        icon: ShieldCheck,
-      },
-      {
-        label: "Executed Modules",
-        value: stats.completedCourses,
-        icon: LayoutDashboard,
-      },
-      {
-        label: "Cryptographic Tokens",
-        value: stats.certificates,
-        icon: Award,
-      },
-    ],
-    [stats],
-  );
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="mx-auto h-16 w-16 animate-spin rounded-full border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            Loading dashboard...
+  // --- Panel content definitions ---
+
+  const statsPanel = (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      {[
+        { label: "Available Nodes", value: stats.totalCourses },
+        { label: "Active Uplinks", value: stats.enrolledCourses },
+        { label: "Executed Modules", value: stats.completedCourses },
+        { label: "Cryptographic Tokens", value: stats.certificates },
+      ].map(({ label, value }) => (
+        <div
+          key={label}
+          className="bg-zinc-950 border border-white/10 rounded-2xl p-6 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.1)] transition-all group relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-3xl group-hover:bg-red-500/10 transition-colors"></div>
+          <p className="text-3xl font-black text-white font-mono">{value}</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">
+            {label}
           </p>
         </div>
-      </div>
-    );
-  }
-
-  const showSidebarLabels = isSidebarOpen || !isSidebarCollapsed;
-
-  const sidebar = (
-    <aside
-      className={`flex h-full min-h-0 flex-col border-white/10 bg-zinc-950/95 text-white backdrop-blur-md transition-all duration-300 ${
-        isSidebarCollapsed ? "xl:w-20" : "xl:w-72"
-      } w-72 border-r`}
-    >
-      <div className="flex h-20 items-center justify-between border-b border-white/10 px-4">
-        <Link
-          href="/dashboard"
-          className="flex min-w-0 items-center gap-3"
-          onClick={() => setIsSidebarOpen(false)}
-        >
-          <span className="h-3 w-3 shrink-0 rounded-full bg-red-500 shadow-[0_0_18px_rgba(239,68,68,0.7)]"></span>
-          {showSidebarLabels && (
-            <span className="truncate text-lg font-black uppercase tracking-tight">
-              Control <span className="text-red-600">Center</span>
-            </span>
-          )}
-        </Link>
-        <button
-          type="button"
-          onClick={() => setIsSidebarOpen(false)}
-          className="rounded-lg p-3 text-gray-400 transition-colors hover:bg-white/10 hover:text-white xl:hidden"
-          aria-label="Close side menu"
-        >
-          <X size={20} />
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsSidebarCollapsed((value) => !value)}
-          className="hidden rounded-lg p-3 text-gray-400 transition-colors hover:bg-white/10 hover:text-white xl:inline-flex"
-          aria-label={
-            isSidebarCollapsed ? "Expand side menu" : "Collapse side menu"
-          }
-        >
-          {isSidebarCollapsed ? (
-            <PanelLeftOpen size={20} />
-          ) : (
-            <PanelLeftClose size={20} />
-          )}
-        </button>
-      </div>
-
-      <nav className="grid gap-2 p-4">
-        {sidebarLinks.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            onClick={() => setIsSidebarOpen(false)}
-            className={`grid min-h-12 grid-cols-[2.75rem_minmax(0,1fr)] items-center rounded-lg border border-transparent text-sm font-bold uppercase tracking-widest text-gray-400 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-white ${
-              isSidebarCollapsed ? "xl:grid-cols-[2.75rem]" : ""
-            }`}
-          >
-            <span className="flex justify-center">
-              <Icon size={18} />
-            </span>
-            {showSidebarLabels && <span className="truncate">{label}</span>}
-          </Link>
-        ))}
-      </nav>
-
-      <div className="mt-auto border-t border-white/10 p-4">
-        {showSidebarLabels && (
-          <div className="mb-4 min-w-0 rounded-lg border border-white/10 bg-black p-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-              Active Operator
-            </p>
-            <p className="mt-1 truncate font-mono text-sm text-gray-300">
-              {user?.name || "Unknown Entity"}
-            </p>
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={logout}
-          className={`grid min-h-12 w-full items-center rounded-lg border border-red-500/30 bg-red-500/10 text-xs font-bold uppercase tracking-widest text-red-500 transition-colors hover:bg-red-500 hover:text-white ${
-            isSidebarCollapsed
-              ? "xl:grid-cols-[1fr] xl:place-items-center"
-              : "grid-cols-[2.75rem_minmax(0,1fr)]"
-          }`}
-        >
-          <span className="flex justify-center">
-            <LogOut size={18} />
-          </span>
-          {showSidebarLabels && (
-            <span className="truncate text-left">Disconnect</span>
-          )}
-        </button>
-      </div>
-    </aside>
+      ))}
+    </div>
   );
 
-  return (
-    <div className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-red-600 selection:text-white">
-      <div className="pointer-events-none fixed right-0 top-0 h-[42rem] w-[42rem] rounded-full bg-red-600/5 blur-[150px]"></div>
-      <div className="pointer-events-none fixed bottom-0 left-0 h-[34rem] w-[34rem] rounded-full bg-red-600/5 blur-[120px]"></div>
-
-      <div
-        className={`relative z-10 grid min-h-screen grid-cols-[minmax(0,1fr)] ${
-          isSidebarCollapsed
-            ? "xl:grid-cols-[5rem_minmax(0,1fr)]"
-            : "xl:grid-cols-[18rem_minmax(0,1fr)]"
-        }`}
-      >
-        <div className="hidden xl:block">{sidebar}</div>
-
-        {isSidebarOpen && (
-          <div className="fixed inset-0 z-50 grid grid-cols-[minmax(0,18rem)_minmax(0,1fr)] xl:hidden">
-            {sidebar}
-            <button
-              type="button"
-              onClick={() => setIsSidebarOpen(false)}
-              className="bg-black/70"
-              aria-label="Close side menu overlay"
-            />
-          </div>
-        )}
-
-        <div className="min-w-0">
-          <header className="sticky top-0 z-30 border-b border-white/10 bg-zinc-950/80 backdrop-blur-md">
-            <div className="flex h-20 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(true)}
-                className="rounded-lg border border-white/10 p-3 text-gray-300 transition-colors hover:border-red-500/40 hover:text-white xl:hidden"
-                aria-label="Open side menu"
-              >
-                <Menu size={22} />
-              </button>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-bold uppercase tracking-widest text-gray-500">
-                  Dashboard
-                </p>
-                <h1 className="truncate text-xl font-black uppercase tracking-tight text-white sm:text-2xl">
-                  Terminal <span className="text-red-600">Access</span>
-                </h1>
-              </div>
-              <Link
-                href="/playground"
-                className="hidden min-h-11 items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 text-xs font-bold uppercase tracking-widest text-red-400 transition-colors hover:bg-red-500 hover:text-white sm:inline-flex"
-              >
-                Editor
-                <ChevronRight size={16} />
-              </Link>
+  const coursesPanel = (
+    <div>
+      <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+        <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center gap-3">
+          <span className="w-4 h-4 bg-red-600 rounded-sm inline-block"></span>
+          Directory Nodes
+        </h3>
+        <Link
+          href="/courses"
+          className="text-gray-400 hover:text-white uppercase text-xs font-bold tracking-widest transition-colors flex items-center gap-1 group"
+        >
+          Scan All{" "}
+          <span className="transform group-hover:translate-x-1 transition-transform">
+            →
+          </span>
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {courses.slice(0, 4).map((course) => (
+          <Link
+            key={course.id}
+            href={`/courses/${course.id}`}
+            className="bg-zinc-950 border border-white/5 p-8 hover:border-red-500/30 hover:bg-zinc-900 transition-all block group relative"
+          >
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-red-600 transition-colors"></div>
+            <h4 className="text-xl font-black text-white mb-3 uppercase tracking-tight group-hover:text-red-50">
+              {course.title}
+            </h4>
+            <p className="text-gray-400 font-light text-sm mb-6 line-clamp-2">
+              {course.description || "System metadata missing"}
+            </p>
+            <div className="flex justify-between items-center pt-6 border-t border-white/5">
+              <span className="text-xs font-mono text-gray-500 px-2 py-1 bg-black border border-white/10 rounded">
+                {course.credits} UNIT
+              </span>
+              <span className="text-xs font-bold text-red-500 uppercase tracking-widest group-hover:text-red-400">
+                Connect
+              </span>
             </div>
-          </header>
-
-          <main className="mx-auto grid w-full max-w-[96rem] gap-8 px-4 py-8 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
-            <section className="grid min-w-0 gap-8">
-              <div className="border-l-4 border-red-600 py-2 pl-5">
-                <h2 className="text-3xl font-black uppercase tracking-tight text-white md:text-5xl">
-                  Metrics <span className="text-gray-500">Online</span>
-                </h2>
-                <p className="mt-3 max-w-3xl text-base font-light tracking-wide text-gray-400 md:text-lg">
-                  Operator{" "}
-                  <span className="font-mono text-white">
-                    {user?.name?.split(" ")[0] || "Student"}
-                  </span>{" "}
-                  - module connections active.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-4 lg:gap-6">
-                {statCards.map(({ label, value, icon: Icon }) => (
-                  <div
-                    key={label}
-                    className="group relative min-w-0 overflow-hidden rounded-xl border border-white/10 bg-zinc-950 p-5 transition-all hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.1)]"
-                  >
-                    <div className="absolute right-0 top-0 h-14 w-14 rounded-bl-3xl bg-white/5 transition-colors group-hover:bg-red-500/10"></div>
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black transition-colors group-hover:border-white/30">
-                        <Icon className="h-6 w-6 text-white group-hover:text-red-400" />
-                      </div>
-                      <p className="truncate font-mono text-3xl font-black text-white">
-                        {value}
-                      </p>
-                    </div>
-                    <p className="mt-2 text-xs font-bold uppercase tracking-widest text-gray-500">
-                      {label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <DashboardSection
-                title="Directory Nodes"
-                href="/courses"
-                action="Scan All"
-              >
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-4 lg:gap-6">
-                  {courses.slice(0, 3).map((course) => (
-                    <Link
-                      key={course.id}
-                      href={`/courses/${course.id}`}
-                      className="group relative block min-w-0 border border-white/5 bg-zinc-950 p-6 transition-all hover:border-red-500/30 hover:bg-zinc-900"
-                    >
-                      <div className="absolute bottom-0 left-0 top-0 w-1 bg-transparent transition-colors group-hover:bg-red-600"></div>
-                      <h4 className="mb-3 line-clamp-2 text-xl font-black uppercase tracking-tight text-white group-hover:text-red-50">
-                        {course.title}
-                      </h4>
-                      <p className="mb-6 line-clamp-2 text-sm font-light text-gray-400">
-                        {course.description || "System metadata missing"}
-                      </p>
-                      <div className="flex items-center justify-between gap-3 border-t border-white/5 pt-6">
-                        <span className="rounded border border-white/10 bg-black px-2 py-1 font-mono text-xs text-gray-500">
-                          {course.credits} UNIT
-                        </span>
-                        <span className="text-xs font-bold uppercase tracking-widest text-red-500 group-hover:text-red-400">
-                          Connect
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </DashboardSection>
-
-              {certificates.length > 0 && (
-                <DashboardSection
-                  title="Issued Credentials"
-                  href="/certificates"
-                  action="Vault"
-                >
-                  <div className="grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-4 lg:gap-6">
-                    {certificates.slice(0, 3).map((cert) => (
-                      <Link
-                        key={cert.id}
-                        href={`/certificates/${cert.id}`}
-                        className="group relative block min-w-0 overflow-hidden rounded-xl border border-red-500/20 bg-black p-6 shadow-[0_0_20px_rgba(220,38,38,0.05)] transition-all hover:border-red-500/60 hover:shadow-[0_0_30px_rgba(220,38,38,0.2)]"
-                      >
-                        <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-bl-full bg-red-900/10 transition-colors group-hover:bg-red-900/20"></div>
-                        <div className="relative z-10 mb-6 flex items-start justify-between gap-4">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-red-500/30 bg-zinc-950">
-                            <Award className="h-6 w-6 text-red-500" />
-                          </div>
-                          <span className="rounded border border-white/10 bg-zinc-950 px-3 py-1 font-mono text-xs text-gray-400">
-                            {new Date(cert.issuedAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <h4 className="mb-2 line-clamp-2 text-xl font-bold uppercase tracking-wide text-white group-hover:text-red-100">
-                          {cert.course?.title || "Soroban Protocol"}
-                        </h4>
-                        <p className="text-sm font-light text-red-500/80">
-                          On-Chain Certification
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                </DashboardSection>
-              )}
-            </section>
-
-            <section className="min-w-0 2xl:pt-[13.5rem]">
-              <div className="border-b border-white/10 pb-4">
-                <h3 className="flex min-w-0 items-center gap-3 text-lg font-black uppercase tracking-widest text-white">
-                  <span className="h-4 w-4 shrink-0 rounded-sm bg-red-600"></span>
-                  <span className="truncate">Audit Trails</span>
-                </h3>
-                <span className="mt-3 inline-flex rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-red-500">
-                  Live Monitoring
-                </span>
-              </div>
-              <div className="mt-6 rounded-xl border border-white/5 bg-zinc-950/50 p-4 backdrop-blur-sm sm:p-6">
-                <AuditLogList />
-              </div>
-            </section>
-          </main>
-        </div>
+          </Link>
+        ))}
       </div>
     </div>
   );
-}
 
-function DashboardSection({
-  title,
-  href,
-  action,
-  children,
-}: {
-  title: string;
-  href: string;
-  action: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="min-w-0">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-        <h3 className="flex min-w-0 items-center gap-3 text-lg font-black uppercase tracking-widest text-white md:text-xl">
-          <span className="h-4 w-4 shrink-0 rounded-sm bg-red-600"></span>
-          <span className="truncate">{title}</span>
+  const certificatesPanel = (
+    <div>
+      <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+        <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center gap-3">
+          <span className="w-4 h-4 bg-red-600 rounded-sm inline-block"></span>
+          Issued Credentials
         </h3>
         <Link
-          href={href}
-          className="inline-flex min-h-11 items-center gap-1 text-xs font-bold uppercase tracking-widest text-gray-400 transition-colors hover:text-white"
+          href="/certificates"
+          className="text-gray-400 hover:text-white uppercase text-xs font-bold tracking-widest transition-colors flex items-center gap-1 group"
         >
-          {action}
-          <ChevronRight size={16} />
+          Vault{" "}
+          <span className="transform group-hover:translate-x-1 transition-transform">
+            →
+          </span>
         </Link>
       </div>
-      {children}
-    </section>
+      <div className="flex flex-col gap-4">
+        {certificates.length === 0 ? (
+          <p className="text-gray-600 text-sm font-mono">No credentials issued yet.</p>
+        ) : (
+          certificates.slice(0, 3).map((cert) => (
+            <Link
+              key={cert.id}
+              href={`/certificates/${cert.id}`}
+              className="bg-black border border-red-500/20 rounded-xl p-6 hover:border-red-500/60 transition-all block group"
+            >
+              <h4 className="text-base font-bold text-white uppercase tracking-wide group-hover:text-red-100">
+                {cert.course?.title || "Soroban Protocol"}
+              </h4>
+              <p className="text-xs font-light text-red-500/80 mt-1">
+                {new Date(cert.issuedAt).toLocaleDateString()}
+              </p>
+            </Link>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
+  const auditPanel = (
+    <div>
+      <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+        <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center gap-3">
+          <span className="w-4 h-4 bg-red-600 rounded-sm inline-block"></span>
+          Audit Trails{" "}
+          <span className="text-gray-600">[Admin Only]</span>
+        </h3>
+        <span className="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-full">
+          Live Monitoring
+        </span>
+      </div>
+      <div className="bg-zinc-950/50 backdrop-blur-sm border border-white/5 rounded-2xl p-8">
+        <AuditLogList />
+      </div>
+    </div>
+  );
+
+  const panelDefs = [
+    { id: "stats", content: statsPanel },
+    { id: "courses", content: coursesPanel },
+    { id: "certificates", content: certificatesPanel },
+    { id: "audit", content: auditPanel },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background text-foreground selection:bg-red-600 selection:text-white pb-20 relative overflow-hidden transition-colors duration-200">
+      {/* Abstract Background Glow */}
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-red-600/5 rounded-full blur-[150px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+      {/* Navigation Layer */}
+      <nav className="relative z-20 bg-bg-secondary/80 backdrop-blur-md border-b border-border-theme sticky top-0">
+    <div className="min-h-screen bg-black text-white selection:bg-red-600 selection:text-white pb-20 relative overflow-hidden">
+      {/* Background glows */}
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-red-600/5 rounded-full blur-[150px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+      {/* Nav */}
+      <nav className="relative z-20 bg-zinc-950/80 backdrop-blur-md border-b border-white/10 sticky top-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-20">
+            <div className="flex items-center gap-4">
+              <span className="text-2xl font-black text-white tracking-tighter uppercase flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                Control <span className="text-red-600">Center</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              {/* Layout edit controls */}
+              {editMode ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={resetLayout}
+                    className="px-4 py-2 text-xs font-bold text-gray-400 bg-zinc-900 border border-white/10 rounded-lg hover:border-white/30 transition-all uppercase tracking-widest"
+                  >
+                    Reset
+                  </button>
+                  <button
+                    onClick={() => setEditMode(false)}
+                    className="px-4 py-2 text-xs font-bold text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 transition-all uppercase tracking-widest"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setEditMode(true)}
+                  className="px-4 py-2 text-xs font-bold text-gray-400 bg-zinc-900 border border-white/10 rounded-lg hover:border-red-500/50 hover:text-white transition-all uppercase tracking-widest flex items-center gap-2"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  Edit Layout
+                </button>
+              )}
+
+              <div className="hidden md:flex flex-col items-end">
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">
+                  Active Operator
+                </span>
+                <span className="text-sm font-mono text-text-secondary">
+                  {user?.name || "Unknown Entity"}
+                </span>
+              </div>
+              <ThemeToggle />
+              <button
+                onClick={logout}
+                className="px-5 py-2.5 text-xs font-bold text-red-500 bg-red-500/10 border border-red-500/30 rounded-lg hover:bg-red-500 hover:text-white transition-all uppercase tracking-widest"
+              >
+                Disconnect
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Edit mode banner */}
+      {editMode && (
+        <div className="relative z-10 bg-red-600/10 border-b border-red-500/30 px-4 py-2 text-center">
+          <p className="text-xs font-bold text-red-400 uppercase tracking-widest">
+            Layout Edit Mode — Drag panels to reorder · Click 1/2/3 to resize columns · Changes are saved automatically
+          </p>
+        </div>
+      )}
+
+      {/* Main */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+        <div className="mb-12 border-l-4 border-red-600 pl-6 py-2">
+          <h2 className="text-4xl md:text-5xl font-black text-foreground mb-3 uppercase tracking-tight">
+            Terminal <span className="text-text-secondary">Access Granted</span>
+          </h2>
+          <p className="text-text-secondary font-light text-lg tracking-wide">
+            Operator{" "}
+            <span className="text-foreground font-mono">
+              {user?.name?.split(" ")[0] || "Student"}
+            </span>{" "}
+            — Metrics and module connections active.
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <WithSkeleton
+          isLoading={isLoading}
+          skeleton={
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+          }
+        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="bg-bg-secondary border border-border-theme rounded-2xl p-6 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.1)] transition-all group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-3xl group-hover:bg-red-500/10 transition-colors"></div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-black border border-white/10 rounded-xl flex items-center justify-center group-hover:border-white/30 transition-colors">
+                <svg
+                  className="w-6 h-6 text-white group-hover:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                  />
+                </svg>
+              </div>
+              <p className="text-3xl font-black text-white font-mono">
+                {stats.totalCourses}
+              </p>
+            </div>
+            <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mt-2">
+              Available Nodes
+            </p>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="bg-bg-secondary border border-border-theme rounded-2xl p-6 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.1)] transition-all group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-3xl group-hover:bg-red-500/10 transition-colors"></div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-black border border-white/10 rounded-xl flex items-center justify-center group-hover:border-white/30 transition-colors">
+                <svg
+                  className="w-6 h-6 text-white group-hover:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <p className="text-3xl font-black text-white font-mono">
+                {stats.enrolledCourses}
+              </p>
+            </div>
+            <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mt-2">
+              Active Uplinks
+            </p>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="bg-bg-secondary border border-border-theme rounded-2xl p-6 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.1)] transition-all group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-3xl group-hover:bg-red-500/10 transition-colors"></div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-black border border-white/10 rounded-xl flex items-center justify-center group-hover:border-white/30 transition-colors">
+                <svg
+                  className="w-6 h-6 text-white group-hover:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                  />
+                </svg>
+              </div>
+              <p className="text-3xl font-black text-white font-mono">
+                {stats.completedCourses}
+              </p>
+            </div>
+            <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mt-2">
+              Executed Modules
+            </p>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="bg-bg-secondary border border-border-theme rounded-2xl p-6 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.1)] transition-all group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-3xl group-hover:bg-red-500/10 transition-colors"></div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-black border border-white/10 rounded-xl flex items-center justify-center group-hover:border-white/30 transition-colors">
+                <svg
+                  className="w-6 h-6 text-white group-hover:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                  />
+                </svg>
+              </div>
+              <p className="text-3xl font-black text-white font-mono">
+                {stats.certificates}
+              </p>
+            </div>
+            <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mt-2">
+              Cryptographic Tokens
+            </p>
+          </motion.div>
+        </div>
+        </WithSkeleton>
+
+        {/* Recent Courses */}
+        <div className="mb-16 [content-visibility:auto] [contain-intrinsic-size:1px_500px]">
+          <div className="flex justify-between items-center mb-8 border-b border-border-theme pb-4">
+            <h3 className="text-xl font-black text-foreground uppercase tracking-widest flex items-center gap-3">
+              <span className="w-4 h-4 bg-red-600 rounded-sm inline-block"></span>{" "}
+              Directory Nodes
+            </h3>
+            <Link
+              href="/courses"
+              className="text-text-secondary hover:text-foreground uppercase text-xs font-bold tracking-widest transition-colors flex items-center gap-1 group"
+            >
+              Scan All{" "}
+              <span className="transform group-hover:translate-x-1 transition-transform">
+                →
+              </span>
+            </Link>
+          </div>
+          <WithSkeleton
+            isLoading={isLoading}
+            skeleton={
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <CourseCardSkeleton />
+                <CourseCardSkeleton />
+                <CourseCardSkeleton />
+              </div>
+            }
+          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {courses.slice(0, 3).map((course, index) => (
+              <Link
+                key={course.id}
+                href={`/courses/${course.id}`}
+              >
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="bg-bg-secondary border border-border-theme/50 p-8 hover:border-red-500/30 hover:bg-bg-tertiary transition-all block group relative h-full"
+                >
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-red-600 transition-colors"></div>
+                  <h4 className="text-xl font-black text-foreground mb-3 uppercase tracking-tight group-hover:text-red-500 transition-colors">
+                    {course.title}
+                  </h4>
+                  <p className="text-text-secondary font-light text-sm mb-6 line-clamp-2">
+                    {course.description || "System metadata missing"}
+                  </p>
+                  <div className="flex justify-between items-center pt-6 border-t border-border-theme/50 mt-auto">
+                    <span className="text-xs font-mono text-text-secondary px-2 py-1 bg-background border border-border-theme rounded">
+                      {course.credits} UNIT
+                    </span>
+                    <span className="text-xs font-bold text-red-500 uppercase tracking-widest group-hover:text-red-400">
+                      Connect
+                    </span>
+                  </div>
+                </motion.div>
+              </Link>
+            ))}
+          </div>
+          </WithSkeleton>
+        </div>
+
+        {/* My Certificates */}
+        {(isLoading || certificates.length > 0) && (
+          <div className="mb-16 [content-visibility:auto] [contain-intrinsic-size:1px_500px]">
+            <div className="flex justify-between items-center mb-8 border-b border-border-theme pb-4">
+              <h3 className="text-xl font-black text-foreground uppercase tracking-widest flex items-center gap-3">
+                <span className="w-4 h-4 bg-red-600 rounded-sm inline-block"></span>{" "}
+                Issued Credentials
+              </h3>
+              <Link
+                href="/certificates"
+                className="text-text-secondary hover:text-foreground uppercase text-xs font-bold tracking-widest transition-colors flex items-center gap-1 group"
+              >
+                Vault{" "}
+                <span className="transform group-hover:translate-x-1 transition-transform">
+                  →
+                </span>
+              </Link>
+            </div>
+            </div>
+            <WithSkeleton
+              isLoading={isLoading}
+              skeleton={
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <CertCardSkeleton />
+                  <CertCardSkeleton />
+                  <CertCardSkeleton />
+                </div>
+              }
+            >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {certificates.slice(0, 3).map((cert, index) => (
+                <Link
+                  key={cert.id}
+                  href={`/certificates/${cert.id}`}
+                >
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    className="bg-background border border-red-500/20 rounded-xl p-8 hover:border-red-500/60 shadow-[0_0_20px_rgba(220,38,38,0.05)] hover:shadow-[0_0_30px_rgba(220,38,38,0.2)] transition-all block relative group overflow-hidden h-full"
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-900/10 rounded-bl-full pointer-events-none group-hover:bg-red-900/20 transition-colors"></div>
+                    <div className="flex items-start justify-between mb-6 relative z-10">
+                      <div className="w-12 h-12 bg-bg-secondary border border-red-500/30 rounded-xl flex items-center justify-center">
+                        <svg
+                          className="w-6 h-6 text-red-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-xs font-mono bg-bg-secondary border border-border-theme text-text-secondary px-3 py-1 rounded">
+                        {new Date(cert.issuedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h4 className="text-xl font-bold text-foreground mb-2 uppercase tracking-wide group-hover:text-red-500 transition-colors">
+                      {cert.course?.title || "Soroban Protocol"}
+                    </h4>
+                    <p className="text-sm font-light text-red-500/80">
+                      On-Chain Certification
+                    </p>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+            </WithSkeleton>
+          </div>
+        )}
+
+        {/* Audit Logs Section */}
+        <div className="mt-20 [content-visibility:auto] [contain-intrinsic-size:1px_500px]">
+          <div className="flex justify-between items-center mb-8 border-b border-border-theme pb-4">
+            <h3 className="text-xl font-black text-foreground uppercase tracking-widest flex items-center gap-3">
+              <span className="w-4 h-4 bg-red-600 rounded-sm inline-block"></span>{" "}
+              Audit Trails <span className="text-text-secondary">[Admin Only]</span>
+            </h3>
+            <span className="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-full">
+              Live Monitoring
+            </span>
+          </div>
+          <div className="bg-bg-secondary/50 backdrop-blur-sm border border-border-theme/50 rounded-2xl p-8">
+            <AuditLogList />
+          </div>
+        </div>
+        <LayoutGrid
+          layout={layout}
+          editMode={editMode}
+          panels={panelDefs}
+          onLayoutChange={saveLayout}
+        />
+      </main>
+    </div>
   );
 }

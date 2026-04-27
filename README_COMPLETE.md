@@ -202,6 +202,16 @@ docker-compose up -d postgres
    - Bulk issuance support
    - Verification dashboard
 
+### Collaborative Tools
+
+1. **Brainstorming Canvas**
+   - Real-time infinite canvas for collaborative ideation
+   - Multiple users brainstorm simultaneously
+   - Sticky notes, shapes, and arrows for mapping ideas
+   - User presence indicators (colored avatars)
+   - Export to PNG, PDF, or JSON
+   - Perfect for designing smart contract logic together
+
 ## 🔐 Authentication
 
 The platform uses JWT-based authentication:
@@ -292,6 +302,45 @@ soroban contract deploy \
 ```
 
 Update `NEXT_PUBLIC_CERTIFICATE_CONTRACT_ID` in frontend/.env.local after deployment.
+
+## 🎨 Real-time Collaborative Canvas
+
+### Overview
+
+The Brainstorming Canvas feature enables students to collaboratively design and brainstorm smart contract logic in real-time:
+
+- **Infinite Canvas**: Unlimited space to map out ideas
+- **Real-time Sync**: Changes appear instantly using Yjs CRDT
+- **Shared Elements**: Sticky notes, arrows, shapes, and text annotations
+- **User Presence**: See who's editing with colored avatars
+- **Export Options**: Download as PNG, PDF, or JSON
+
+### Accessing the Canvas
+
+```
+http://localhost:3000/brainstorm
+```
+
+### Setup
+
+The canvas requires a separate collaboration server:
+
+```bash
+# Terminal 1: Start main backend
+cd backend
+npm run dev
+
+# Terminal 2: Start collaboration server
+npx ts-node src/collaborationServer.ts
+```
+
+### Features
+
+- **Create Canvas**: Click "New Canvas" to start brainstorming
+- **Invite Collaborators**: Share the room ID with team members
+- **Export**: Download your ideas as PNG, PDF, or JSON files
+
+For detailed documentation, see [docs/BRAINSTORM_CANVAS_GUIDE.md](docs/BRAINSTORM_CANVAS_GUIDE.md)
 
 ## 🧪 Testing
 

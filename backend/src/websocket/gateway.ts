@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { verifyToken } from '../auth/auth.service.js';
+import { sseSessionManager } from '../sse/SseSessionManager.js';
 import logger from '../utils/logger.js';
 import { pubClient, subClient } from '../utils/redis.js';
 
@@ -68,6 +69,7 @@ export const initWebSocketGateway = (io: Server) => {
     } else if (channel === 'user_metrics_updated') {
       if (data.userId) {
         io.to(`user:${data.userId}`).emit('user_metrics_updated', data);
+        sseSessionManager.emitToUser(String(data.userId), 'user_metrics_updated', data);
       }
     }
   });

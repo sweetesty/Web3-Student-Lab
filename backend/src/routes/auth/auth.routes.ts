@@ -1,10 +1,12 @@
 import { Request, Response, Router } from 'express';
 import { authenticate } from '../../auth/auth.middleware.js';
 import { login, register } from '../../auth/auth.service.js';
+import { blacklistAccessToken, rotateRefreshToken } from '../../auth/token.service.js';
 import { LoginRequest } from '../../auth/types.js';
-import { loginSchema, registerSchema } from '../../auth/validation.schemas.js';
+import { loginSchema, registerSchema, web3VerifySchema } from '../../auth/validation.schemas.js';
+import { createNonce, verifySignature } from '../../auth/web3.service.js';
+import { slidingWindowRateLimiter } from '../../middleware/rateLimiter.js';
 import { validateRequest } from '../../utils/validation.js';
-import { rotateRefreshToken, blacklistAccessToken } from '../../auth/token.service.js';
 
 const router = Router();
 
@@ -122,6 +124,75 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
   }
 
   res.json({ message: 'Logged out successfully' });
+});
+
+/**
+ * @route   GET /api/auth/nonce
+ * @desc    Generate a cryptographic nonce for Web3 wallet authentication
+ * @access  Public
+ */
+router.get('/nonce',
+  slidingWindowRateLimiter({
+    windowMs: 60 * 1000, // 1 minute
+    limit: 10, // 10 requests per minute per IP
+    keyPrefix: 'rl:nonce',
+  }),
+  async (req: Request, res: Response) => {
+    try {
+      const { walletAddress } = req.query;
+
+      if (!walletAddress || typeof walletAddress !== 'string') {
+        res.status(400).json({ error: 'Wallet address is required' });
+        return;
+      }
+
+      // Validate wallet address format
+      if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+        res.status(400).json({ error: 'Invalid wallet address format' });
+        return;
+      }
+
+      const nonce = await createNonce(walletAddress);
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+      res.json({
+        nonce,
+        expiresAt: expiresAt.toISOString(),
+      });
+    } catch (error) {
+      console.error('Nonce generation error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
+/**
+ * @route   POST /api/auth/verify
+ * @desc    Verify Web3 wallet signature and authenticate user
+ * @access  Public
+ */
+router.post('/verify', validateRequest(web3VerifySchema), async (req: Request, res: Response) => {
+  try {
+    const { walletAddress, signature, nonce } = req.body;
+
+    const authResponse = await verifySignature(walletAddress, signature, nonce);
+
+    res.json(authResponse);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'Invalid or expired nonce') {
+        res.status(401).json({ error: error.message });
+        return;
+      }
+      if (error.message === 'Signature verification failed' || error.message === 'Invalid signature format') {
+        res.status(401).json({ error: 'Invalid signature' });
+        return;
+      }
+    }
+
+    console.error('Signature verification error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 export default router;

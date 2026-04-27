@@ -21,3 +21,24 @@ export interface AuthResponse {
   user: User;
   token: string;
 }
+
+export interface Web3NonceRequest {
+  walletAddress: string;
+}
+
+export interface Web3NonceResponse {
+  nonce: string;
+  expiresAt: string;
+}
+
+export interface Web3VerifyRequest {
+  walletAddress: string;
+  signature: string;
+  nonce: string;
+}
+
+export interface Web3AuthResponse {
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+}

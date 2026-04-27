@@ -1,5 +1,8 @@
 import apiClient from "./api-client";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+
 export interface User {
   id: string;
   email: string;
@@ -64,6 +67,30 @@ export interface Feedback {
   updatedAt: string;
   student?: User;
   course?: Course;
+}
+
+export interface ExportJobResult {
+  fileName: string;
+  downloadUrl: string;
+  expiresAt: string;
+}
+
+export interface ExportJobStatus {
+  id: string;
+  state: string;
+  progress: number;
+  result?: ExportJobResult;
+}
+
+export interface ExportSseMessage {
+  userId?: string;
+  type?: "EXPORT_PROGRESS" | "EXPORT_COMPLETED" | "EXPORT_FAILED";
+  jobId?: string;
+  progress?: number;
+  stage?: string;
+  result?: ExportJobResult;
+  error?: string;
+  timestamp?: string;
 }
 
 // Authentication APIs
@@ -235,5 +262,33 @@ export const analyticsAPI = {
   getGlobalStats: async (): Promise<any> => {
     const response = await apiClient.get("/analytics/global-stats");
     return response.data;
+  },
+};
+
+export const exportAPI = {
+  start: async (data: {
+    type: "students" | "audit" | "courses";
+    format: "csv" | "json";
+  }): Promise<{ jobId: string }> => {
+    const response = await apiClient.post("/export", data);
+    return response.data;
+  },
+
+  getStatus: async (jobId: string): Promise<ExportJobStatus> => {
+    const response = await apiClient.get(`/export/${jobId}/status`);
+    return response.data;
+  },
+
+  openStatusStream: (): EventSource => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      throw new Error("Missing auth token for SSE connection");
+    }
+
+    const streamUrl = new URL(`${API_BASE_URL}/export/events`);
+    streamUrl.searchParams.set("access_token", token);
+
+    return new EventSource(streamUrl.toString());
   },
 };

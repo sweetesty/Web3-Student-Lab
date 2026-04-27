@@ -1,9 +1,9 @@
 "use client";
 
+import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -16,24 +16,33 @@ export default function Navbar() {
     { name: "MODULES", path: "/courses" },
     { name: "ROADMAP", path: "/roadmap" },
     { name: "PLAYGROUND", path: "/playground" },
+    { name: "REVIEWS", path: "/peer-review" },
     { name: "SIMULATOR", path: "/simulator" },
     { name: "IDEAS", path: "/ideas" },
     { name: "VERIFY", path: "/verify" },
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/80 backdrop-blur-md">
+    <nav
+      className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/80 backdrop-blur-md"
+      aria-label="Main navigation"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300 shadow-[0_0_15px_rgba(220,38,38,0.5)]">
+            <Link href="/" className="flex items-center gap-3 group" aria-label="Web3 Lab - Go to homepage">
+              <div
+                className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300 shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+                aria-hidden="true"
+              >
                 <svg
                   className="w-6 h-6 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
                 >
                   <path
                     strokeLinecap="round"
@@ -50,11 +59,13 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden xl:flex items-center gap-6">
+          <div className="hidden xl:flex items-center gap-6" role="menubar" aria-label="Site navigation">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 href={link.path}
+                role="menuitem"
+                aria-current={isActive(link.path) ? "page" : undefined}
                 className={`text-[10px] font-black tracking-[0.2em] transition-colors uppercase ${
                   isActive(link.path)
                     ? "text-red-500"
@@ -71,6 +82,7 @@ export default function Navbar() {
               <div className="flex items-center gap-4">
                 <Link
                   href="/dashboard"
+rent={isActive("/dashboard") ? "page" : undefined}
                   className={`text-[10px] font-black tracking-[0.2em] px-4 py-2 border rounded transition-all uppercase ${
                     isActive("/dashboard")
                       ? "bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]"
@@ -81,6 +93,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/certificates"
+                  aria-current={isActive("/certificates") ? "page" : undefined}
                   className={`text-[10px] font-black tracking-[0.2em] px-4 py-2 border rounded transition-all uppercase ${
                     isActive("/certificates")
                       ? "bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]"
@@ -89,16 +102,19 @@ export default function Navbar() {
                 >
                   VAULT
                 </Link>
+                <NotificationBell />
                 <button
                   onClick={logout}
+                  aria-label="Logout from your account"
                   className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center hover:border-red-500/50 transition-colors group"
-                  title="Logout"
                 >
                   <svg
                     className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
                   >
                     <path
                       strokeLinecap="round"
@@ -131,13 +147,18 @@ export default function Navbar() {
           <div className="xl:hidden flex items-center">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-300 hover:text-white focus:outline-none"
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="mobile-menu"
+              aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              className="text-gray-300 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
             >
               <svg
                 className="w-8 h-8"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
               >
                 {isMobileMenuOpen ? (
                   <path
@@ -162,11 +183,18 @@ export default function Navbar() {
 
       {/* Mobile Menu Panel */}
       {isMobileMenuOpen && (
-        <div className="xl:hidden bg-black border-b border-white/10 px-4 pt-2 pb-6 space-y-2 shadow-2xl">
+        <div
+          id="mobile-menu"
+          className="xl:hidden bg-black border-b border-white/10 px-4 pt-2 pb-6 space-y-2 shadow-2xl"
+          role="menu"
+          aria-label="Mobile navigation"
+        >
           {navLinks.map((link) => (
             <Link
               key={link.path}
               href={link.path}
+              role="menuitem"
+              aria-current={isActive(link.path) ? "page" : undefined}
               onClick={() => setIsMobileMenuOpen(false)}
               className={`block px-3 py-3 text-sm font-black tracking-widest uppercase rounded-md transition-colors ${
                 isActive(link.path)
@@ -177,11 +205,12 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-          <div className="h-px w-full bg-white/10 my-2"></div>
+          <div className="h-px w-full bg-white/10 my-2" role="separator"></div>
           {user ? (
             <>
               <Link
                 href="/dashboard"
+                role="menuitem"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block px-3 py-3 text-sm font-black tracking-widest text-white uppercase bg-red-600 rounded-md"
               >
@@ -192,6 +221,7 @@ export default function Navbar() {
                   logout();
                   setIsMobileMenuOpen(false);
                 }}
+                role="menuitem"
                 className="block w-full text-left px-3 py-3 text-sm font-black tracking-widest text-red-500 uppercase hover:bg-red-500/10 rounded-md"
               >
                 Logout
@@ -201,6 +231,7 @@ export default function Navbar() {
             <>
               <Link
                 href="/auth/login"
+                role="menuitem"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block px-3 py-3 text-sm font-black tracking-widest text-gray-400 hover:text-white uppercase"
               >
@@ -208,6 +239,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/auth/register"
+                role="menuitem"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block px-3 py-3 text-sm font-black tracking-widest text-red-500 hover:text-red-400 uppercase"
               >
