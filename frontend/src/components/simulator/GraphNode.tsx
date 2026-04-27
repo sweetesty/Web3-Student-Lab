@@ -16,6 +16,10 @@ export const GraphNode: React.FC<GraphNodeProps> = ({ node, onClick }) => {
       animate={{ scale: 1, x: node.x, y: node.y }}
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
       onClick={() => onClick(node)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(node); }}
+      role="button"
+      tabIndex={0}
+      aria-label={`${node.type === 'account' ? 'Account' : node.type === 'asset' ? 'Asset' : 'Node'}: ${node.label || node.id}. Click to view details.`}
       style={{ cursor: 'pointer' }}
     >
       <circle
@@ -24,6 +28,7 @@ export const GraphNode: React.FC<GraphNodeProps> = ({ node, onClick }) => {
         stroke="#fff"
         strokeWidth={2}
         className="drop-shadow-lg"
+        aria-hidden="true"
       />
       <motion.circle
         r={12}
@@ -32,6 +37,7 @@ export const GraphNode: React.FC<GraphNodeProps> = ({ node, onClick }) => {
         strokeWidth={2}
         animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
         transition={{ duration: 2, repeat: Infinity }}
+        aria-hidden="true"
       />
       <text
         dy={25}
@@ -39,6 +45,7 @@ export const GraphNode: React.FC<GraphNodeProps> = ({ node, onClick }) => {
         fill="#888"
         fontSize="10"
         className="font-mono font-bold uppercase tracking-tighter"
+        aria-hidden="true"
       >
         {node.label || node.id.slice(0, 4)}
       </text>

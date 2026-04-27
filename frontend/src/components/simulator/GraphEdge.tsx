@@ -13,7 +13,7 @@ export const GraphEdge: React.FC<GraphEdgeProps> = ({ edge }) => {
   if (!source.x || !source.y || !target.x || !target.y) return null;
 
   return (
-    <g>
+    <g aria-hidden="true">
       <line
         x1={source.x}
         y1={source.y}

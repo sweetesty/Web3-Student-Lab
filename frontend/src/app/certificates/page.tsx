@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { certificatesAPI, Certificate } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { Certificate, certificatesAPI } from "@/lib/api";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function CertificatesVaultPage() {
   const { user } = useAuth();
@@ -133,7 +133,7 @@ export default function CertificatesVaultPage() {
                 <div className="text-sm font-mono text-red-500/80 mb-6 truncate">
                   TX:{" "}
                   {cert.certificateHash
-                    ? `${cert.certificateHash.substring(0, 16)}...`
+                    ? truncateHash(cert.certificateHash, 8)
                     : "PENDING"}
                 </div>
 
@@ -141,12 +141,21 @@ export default function CertificatesVaultPage() {
                   <span className="text-xs font-bold text-gray-500 uppercase tracking-widest group-hover:text-gray-300 transition-colors">
                     Web3 Lab Identity
                   </span>
-                  <span className="text-xs font-bold text-red-500 uppercase tracking-widest group-hover:text-red-400 flex items-center gap-1">
-                    Inspect Asset{" "}
-                    <span className="transform group-hover:translate-x-1 transition-transform">
-                      →
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/certificates/generate?id=${cert.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs font-bold text-red-600 hover:text-red-400 uppercase tracking-widest transition-colors"
+                    >
+                      Download ↓
+                    </Link>
+                    <span className="text-xs font-bold text-red-500 uppercase tracking-widest group-hover:text-red-400 flex items-center gap-1">
+                      Inspect{" "}
+                      <span className="transform group-hover:translate-x-1 transition-transform">
+                        →
+                      </span>
                     </span>
-                  </span>
+                  </div>
                 </div>
               </Link>
             ))}

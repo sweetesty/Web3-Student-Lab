@@ -1,13 +1,21 @@
 "use client";
 
 import { CodeEditor } from "@/components/playground/CodeEditor";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { WithSkeleton } from "@/components/ui/WithSkeleton";
+import { EditorSkeleton } from "@/components/ui/skeletons/EditorSkeleton";
 
 
 export default function PlaygroundPage() {
 
   const [output, setOutput] = useState("");
   const [isCompiling, setIsCompiling] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitializing(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCompile = () => {
     setIsCompiling(true);
@@ -56,8 +64,13 @@ export default function PlaygroundPage() {
               </div>
             </div>
 
-            <div className="flex-grow flex flex-col overflow-hidden rounded-xl border border-white/5">
-              <CodeEditor roomName="main-lab-session" />
+            <div className="flex-grow flex flex-col overflow-hidden rounded-xl border border-white/5 relative">
+              <WithSkeleton
+                isLoading={isInitializing}
+                skeleton={<EditorSkeleton />}
+              >
+                <CodeEditor roomName="main-lab-session" />
+              </WithSkeleton>
             </div>
 
             <button

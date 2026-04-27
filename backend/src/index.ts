@@ -5,6 +5,7 @@ import { rateLimit } from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import prisma from './db/index.js';
+import { dbRoutingMiddleware } from './middleware/dbRouting.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import routes from './routes/index.js';
 import { validateEnvironment } from './utils/checkEnv.js';
@@ -43,6 +44,7 @@ const port = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 app.use(decryptionMiddleware);
+app.use(dbRoutingMiddleware);
 
 // Initialize WebSocket Gateway
 initWebSocketGateway(io);
