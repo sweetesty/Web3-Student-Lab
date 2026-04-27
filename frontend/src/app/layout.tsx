@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/contexts/AuthContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -57,6 +58,13 @@ export default function RootLayout({
             <main className="flex-grow">{children}</main>
           </AuthProvider>
         </ThemeProvider>
+        <AuthProvider>
+          <a href="#main-content" className="skip-to-content">
+            Skip to main content
+          </a>
+          <Navbar />
+          <main id="main-content" className="flex-grow">{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );

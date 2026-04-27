@@ -49,13 +49,13 @@ export default function Home() {
   return (
     <div className="bg-black text-white selection:bg-red-600 selection:text-white">
       {/* Hero Section */}
-      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 overflow-hidden">
+      <section aria-label="Hero" className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 overflow-hidden">
         {/* Abstract Background Glows */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-600/20 rounded-full blur-[120px] pointer-events-none" aria-hidden="true"></div>
 
         <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-500 font-medium text-sm mb-8 animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-red-500"></span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-500 font-medium text-sm mb-8 animate-pulse" role="status" aria-live="polite">
+            <span className="w-2 h-2 rounded-full bg-red-500" aria-hidden="true"></span>
             Stellar Testnet Integration Live
           </div>
 
@@ -87,7 +87,7 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </main>
+      </section>
 
       {/* Features Grid - The Lab Modules */}
       <section className="relative bg-zinc-950 py-24 border-y border-white/5">
@@ -105,13 +105,16 @@ export default function Home() {
             <Link
               href="/simulator"
               className="bg-black border border-white/10 hover:border-red-500/50 rounded-2xl p-8 transition-all hover:-translate-y-2 group"
+              aria-label="Simulator - Observe live Stellar ledger activity"
             >
-              <div className="w-14 h-14 bg-red-500/10 rounded-xl flex items-center justify-center mb-6 border border-red-500/20 group-hover:bg-red-600 transition-colors">
+              <div className="w-14 h-14 bg-red-500/10 rounded-xl flex items-center justify-center mb-6 border border-red-500/20 group-hover:bg-red-600 transition-colors" aria-hidden="true">
                 <svg
                   className="w-7 h-7 text-red-500 group-hover:text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
                 >
                   <path
                     strokeLinecap="round"
@@ -128,7 +131,7 @@ export default function Home() {
                 Observe live Stellar ledger activity in a terminal-themed
                 visualization.
               </p>
-              <span className="text-[10px] font-black text-red-500 uppercase tracking-widest group-hover:pl-2 transition-all">
+              <span className="text-[10px] font-black text-red-500 uppercase tracking-widest group-hover:pl-2 transition-all" aria-hidden="true">
                 Enter →
               </span>
             </Link>
@@ -136,13 +139,16 @@ export default function Home() {
             <Link
               href="/playground"
               className="bg-black border border-white/10 hover:border-red-500/50 rounded-2xl p-8 transition-all hover:-translate-y-2 group"
+              aria-label="Playground - Compile and execute Soroban smart contracts"
             >
-              <div className="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center mb-6 border border-white/10 group-hover:bg-white group-hover:text-black transition-colors">
+              <div className="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center mb-6 border border-white/10 group-hover:bg-white group-hover:text-black transition-colors" aria-hidden="true">
                 <svg
                   className="w-7 h-7 text-white group-hover:text-black"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
                 >
                   <path
                     strokeLinecap="round"
@@ -159,7 +165,7 @@ export default function Home() {
                 Compile and execute Soroban smart contract logic in a sandboxed
                 environment.
               </p>
-              <span className="text-[10px] font-black text-white uppercase tracking-widest group-hover:pl-2 transition-all">
+              <span className="text-[10px] font-black text-white uppercase tracking-widest group-hover:pl-2 transition-all" aria-hidden="true">
                 Execute →
               </span>
             </Link>
@@ -167,13 +173,16 @@ export default function Home() {
             <Link
               href="/roadmap"
               className="bg-black border border-white/10 hover:border-red-500/50 rounded-2xl p-8 transition-all hover:-translate-y-2 group"
+              aria-label="Roadmap - Track your progression through the Stellar mastery tree"
             >
-              <div className="w-14 h-14 bg-red-500/10 rounded-xl flex items-center justify-center mb-6 border border-red-500/20 group-hover:bg-red-600 transition-colors">
+              <div className="w-14 h-14 bg-red-500/10 rounded-xl flex items-center justify-center mb-6 border border-red-500/20 group-hover:bg-red-600 transition-colors" aria-hidden="true">
                 <svg
                   className="w-7 h-7 text-red-500 group-hover:text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
                 >
                   <path
                     strokeLinecap="round"
@@ -190,7 +199,7 @@ export default function Home() {
                 Track your progression through the multi-stage Stellar mastery
                 tree.
               </p>
-              <span className="text-[10px] font-black text-red-500 uppercase tracking-widest group-hover:pl-2 transition-all">
+              <span className="text-[10px] font-black text-red-500 uppercase tracking-widest group-hover:pl-2 transition-all" aria-hidden="true">
                 Visualize →
               </span>
             </Link>
@@ -198,13 +207,16 @@ export default function Home() {
             <Link
               href="/ideas"
               className="bg-black border border-white/10 hover:border-red-500/50 rounded-2xl p-8 transition-all hover:-translate-y-2 group"
+              aria-label="Incubator - Generate optimized project concepts for your next build"
             >
-              <div className="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center mb-6 border border-white/10 group-hover:bg-white group-hover:text-black transition-colors">
+              <div className="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center mb-6 border border-white/10 group-hover:bg-white group-hover:text-black transition-colors" aria-hidden="true">
                 <svg
                   className="w-7 h-7 text-white group-hover:text-black"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
                 >
                   <path
                     strokeLinecap="round"
@@ -221,7 +233,7 @@ export default function Home() {
                 Generate heuristically optimized project concepts for your next
                 build.
               </p>
-              <span className="text-[10px] font-black text-white uppercase tracking-widest group-hover:pl-2 transition-all">
+              <span className="text-[10px] font-black text-white uppercase tracking-widest group-hover:pl-2 transition-all" aria-hidden="true">
                 Initialize →
               </span>
             </Link>
@@ -230,36 +242,36 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-24 bg-black border-b border-white/5">
+      <section className="py-24 bg-black border-b border-white/5" aria-label="Platform statistics">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center" aria-live="polite" aria-busy={isLoading}>
             <div className="p-6">
-              <p className="text-5xl font-black text-red-600 mb-4 tracking-tighter">
-                {isLoading ? "..." : `${stats.coursesCount}+`}
+              <p className="text-5xl font-black text-red-600 mb-4 tracking-tighter" aria-label={`${stats.coursesCount} active modules`}>
+                {isLoading ? <span aria-hidden="true">...</span> : `${stats.coursesCount}+`}
               </p>
               <p className="text-gray-300 font-bold uppercase tracking-widest text-sm">
                 Active Modules
               </p>
             </div>
             <div className="p-6">
-              <p className="text-5xl font-black text-white mb-4 tracking-tighter shadow-white">
-                {isLoading ? "..." : `${stats.studentsCount}+`}
+              <p className="text-5xl font-black text-white mb-4 tracking-tighter shadow-white" aria-label={`${stats.studentsCount} engineers enrolled`}>
+                {isLoading ? <span aria-hidden="true">...</span> : `${stats.studentsCount}+`}
               </p>
               <p className="text-gray-300 font-bold uppercase tracking-widest text-sm">
                 Engineers Enrolled
               </p>
             </div>
             <div className="p-6">
-              <p className="text-5xl font-black text-red-600 mb-4 tracking-tighter">
-                {isLoading ? "..." : `${stats.certificatesCount}+`}
+              <p className="text-5xl font-black text-red-600 mb-4 tracking-tighter" aria-label={`${stats.certificatesCount} credentials issued`}>
+                {isLoading ? <span aria-hidden="true">...</span> : `${stats.certificatesCount}+`}
               </p>
               <p className="text-gray-300 font-bold uppercase tracking-widest text-sm">
                 Credentials Issued
               </p>
             </div>
             <div className="p-6">
-              <p className="text-5xl font-black text-white mb-4 tracking-tighter shadow-white">
-                {isLoading ? "..." : stats.verificationRate}
+              <p className="text-5xl font-black text-white mb-4 tracking-tighter shadow-white" aria-label={`${stats.verificationRate} on-chain verified`}>
+                {isLoading ? <span aria-hidden="true">...</span> : stats.verificationRate}
               </p>
               <p className="text-gray-300 font-bold uppercase tracking-widest text-sm">
                 On-Chain Verified
@@ -295,16 +307,18 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-zinc-950 border-t border-white/5 py-12">
+      <footer className="bg-zinc-950 border-t border-white/5 py-12" role="contentinfo" aria-label="Site footer">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-red-600 rounded-md flex items-center justify-center">
+              <div className="w-8 h-8 bg-red-600 rounded-md flex items-center justify-center" aria-hidden="true">
                 <svg
                   className="w-5 h-5 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
                 >
                   <path
                     strokeLinecap="round"
@@ -319,7 +333,7 @@ export default function Home() {
               </span>
             </div>
 
-            <div className="flex gap-8 text-sm font-bold tracking-wide uppercase text-gray-500">
+            <nav className="flex gap-8 text-sm font-bold tracking-wide uppercase text-gray-500" aria-label="Footer navigation">
               <Link
                 href="/courses"
                 className="hover:text-white transition-colors"
@@ -338,7 +352,7 @@ export default function Home() {
               <a href="#" className="hover:text-white transition-colors">
                 Terms
               </a>
-            </div>
+            </nav>
 
             <p className="text-sm font-medium text-gray-600">
               © 2026 WEB3 STUDENT LAB. PROTOCOL SECURED.

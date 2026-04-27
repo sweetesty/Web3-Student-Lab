@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Course, coursesAPI } from "@/lib/api";
 import Link from "next/link";
-import { coursesAPI, Course } from "@/lib/api";
+import { useEffect, useState } from "react";
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -83,18 +83,23 @@ export default function CoursesPage() {
         {/* Search Bar */}
         <div className="mb-12 relative z-10">
           <div className="relative max-w-xl">
+            <label htmlFor="course-search" className="sr-only">Search courses</label>
             <input
-              type="text"
+              id="course-search"
+              type="search"
               placeholder="SEARCH NODE DIRECTORY..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-5 py-4 pl-14 rounded-xl border border-white/20 bg-black text-white font-mono focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-colors uppercase tracking-wide placeholder-gray-600 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+              aria-label="Search courses by title or description"
             />
             <svg
               className="absolute left-5 top-1/2 transform -translate-y-1/2 w-6 h-6 text-red-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
             >
               <path
                 strokeLinecap="round"
@@ -109,13 +114,15 @@ export default function CoursesPage() {
         {/* Courses Grid */}
         <div className="relative z-10">
           {filteredCourses.length === 0 ? (
-            <div className="text-center py-20 border border-white/10 rounded-2xl bg-zinc-950/50 backdrop-blur-sm">
-              <div className="w-20 h-20 bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+            <div className="text-center py-20 border border-white/10 rounded-2xl bg-zinc-950/50 backdrop-blur-sm" role="status">
+              <div className="w-20 h-20 bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-red-500/20" aria-hidden="true">
                 <svg
                   className="h-10 w-10 text-red-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
                 >
                   <path
                     strokeLinecap="round"
@@ -135,22 +142,29 @@ export default function CoursesPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              aria-live="polite"
+              aria-label={`${filteredCourses.length} course${filteredCourses.length !== 1 ? "s" : ""} found`}
+            >
               {filteredCourses.map((course) => (
                 <Link
                   key={course.id}
                   href={`/courses/${course.id}`}
                   className="group bg-zinc-950 border border-white/10 rounded-2xl p-8 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(220,38,38,0.15)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
+                  aria-label={`${course.title} - ${course.credits} credits, taught by ${course.instructor}`}
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 rounded-bl-[100px] pointer-events-none group-hover:bg-red-600/10 transition-colors"></div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 rounded-bl-[100px] pointer-events-none group-hover:bg-red-600/10 transition-colors" aria-hidden="true"></div>
 
                   <div className="flex items-start justify-between mb-8 relative z-10">
-                    <div className="w-14 h-14 bg-black border border-white/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:border-red-500/50 group-hover:bg-red-500/10 transition-colors">
+                    <div className="w-14 h-14 bg-black border border-white/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:border-red-500/50 group-hover:bg-red-500/10 transition-colors" aria-hidden="true">
                       <svg
                         className="w-7 h-7 text-white group-hover:text-red-500 transition-colors"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        focusable="false"
                       >
                         <path
                           strokeLinecap="round"
@@ -176,7 +190,7 @@ export default function CoursesPage() {
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
                       {course.instructor}
                     </span>
-                    <span className="inline-flex items-center gap-2 text-red-500 font-bold uppercase text-xs tracking-widest group-hover:text-red-400 transition-colors">
+                    <span className="inline-flex items-center gap-2 text-red-500 font-bold uppercase text-xs tracking-widest group-hover:text-red-400 transition-colors" aria-hidden="true">
                       Enter Node{" "}
                       <span className="transform group-hover:translate-x-1 transition-transform">
                         →

@@ -3,6 +3,7 @@ import { Request, Response, Router } from 'express';
 import { authenticate } from '../auth/auth.middleware.js';
 import { normalizeSorobanDid } from '../auth/auth.service.js';
 import prisma from '../db/index.js';
+import { markUserWriteToPrimary } from '../db/requestContext.js';
 import { linkDidToCertificates } from '../routes/certificates.js';
 
 const router = Router();
@@ -101,6 +102,8 @@ router.put('/profile', authenticate, async (req: Request, res: Response) => {
       });
       linkDidToCertificates(req.user.id, student.did ?? null);
     }
+
+    markUserWriteToPrimary(req.user.id);
 
     res.json({
       id: student.id,
