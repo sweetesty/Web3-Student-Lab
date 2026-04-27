@@ -1,10 +1,15 @@
-import { OfflineNotification } from "@/components/notifications/OfflineNotification";
-import { OfflineReadyNotification } from "@/components/notifications/OfflineReadyNotification";
-import { UpdateAvailableNotification } from "@/components/notifications/UpdateAvailableNotification";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+>>>>>>> origin/main
 import { AuthProvider } from "@/contexts/AuthContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+=======
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+>>>>>>> origin/main
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,17 +25,11 @@ export const metadata: Metadata = {
   title: "Web3 Student Lab - Blockchain Education Platform",
   description:
     "Learn blockchain development with hands-on experience using Soroban smart contracts and Stellar blockchain",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Web3 Student Lab",
-  },
-  formatDetection: {
-    telephone: false,
-  },
 };
 
 import Navbar from "@/components/layout/Navbar";
+import { ToastContainer } from "@/components/notifications/ToastContainer";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 export default function RootLayout({
   children,
@@ -38,25 +37,49 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#000000" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme');
+                  var isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (isDark) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen transition-colors duration-200`}
       >
+        <ThemeProvider>
+          <AuthProvider>
+            <Navbar />
+            <main className="flex-grow">{children}</main>
+          </AuthProvider>
+        </ThemeProvider>
         <AuthProvider>
+<<<<<<< HEAD
+          <NotificationProvider>
+            <Navbar />
+            <main className="flex-grow">{children}</main>
+            <ToastContainer />
+          </NotificationProvider>
+=======
+          <a href="#main-content" className="skip-to-content">
+            Skip to main content
+          </a>
           <Navbar />
-          <main className="flex-grow">{children}</main>
-
-          {/* Notification Components */}
-          <OfflineReadyNotification />
-          <OfflineNotification />
-          <UpdateAvailableNotification />
+          <main id="main-content" className="flex-grow">{children}</main>
+>>>>>>> origin/main
         </AuthProvider>
       </body>
     </html>

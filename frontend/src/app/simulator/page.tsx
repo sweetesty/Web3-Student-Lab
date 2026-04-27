@@ -2,6 +2,8 @@
 
 import { NetworkGraph } from "@/components/simulator/NetworkGraph";
 import { useEffect, useState } from "react";
+import { WithSkeleton } from "@/components/ui/WithSkeleton";
+import { GraphSkeleton } from "@/components/ui/skeletons/GraphSkeleton";
 
 
 interface Transaction {
@@ -25,6 +27,12 @@ export default function SimulatorPage() {
   const [ledgers, setLedgers] = useState<Ledger[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLive, setIsLive] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitializing(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
   // const scrollRef = useRef<HTMLDivElement>(null); // Reserved for future scroll functionality
 
   // Generate fake live data
@@ -90,9 +98,15 @@ export default function SimulatorPage() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-white/10 rounded">
+            <div
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-white/10 rounded"
+              role="status"
+              aria-live="polite"
+              aria-label={isLive ? "Live feed active" : "Feed paused"}
+            >
               <div
                 className={`w-2 h-2 rounded-full ${isLive ? "bg-green-500 animate-pulse" : "bg-red-500"}`}
+                aria-hidden="true"
               ></div>
               <span className="text-[10px] uppercase font-bold tracking-widest">
                 {isLive ? "Live Feed" : "Paused"}
@@ -101,6 +115,8 @@ export default function SimulatorPage() {
             <button
               onClick={() => setIsLive(!isLive)}
               className="px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-colors"
+              aria-pressed={isLive}
+              aria-label={isLive ? "Stop live sync" : "Start live sync"}
             >
               {isLive ? "Stop Sync" : "Start Sync"}
             </button>
@@ -110,22 +126,23 @@ export default function SimulatorPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-grow h-[calc(100vh-250px)]">
           {/* Recent Ledgers */}
           <div className="lg:col-span-1 bg-zinc-950 border border-white/10 p-6 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
-            <h3 className="text-sm font-bold border-b border-white/10 pb-4 mb-6 uppercase tracking-widest flex items-center justify-between">
+            <h2 className="text-sm font-bold border-b border-white/10 pb-4 mb-6 uppercase tracking-widest flex items-center justify-between">
               Ledger Chain
               <span className="text-[10px] text-gray-600 font-normal">
                 History [10]
               </span>
-            </h3>
-            <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-grow">
+            </h2>
+            <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-grow" role="feed" aria-label="Recent ledgers" aria-live="polite">
               {ledgers.length === 0 && (
                 <p className="text-gray-700 italic text-xs">
                   Awaiting first ledger pulse...
                 </p>
               )}
               {ledgers.map((l) => (
-                <div
+                <article
                   key={l.sequence}
                   className="p-4 bg-black border-l-2 border-red-600 border-r border-t border-b border-white/5 rounded-r group hover:border-red-500/50 transition-colors"
+                  aria-label={`Ledger #${l.sequence}, ${l.txCount} transactions, at ${l.time}`}
                 >
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-red-500 font-black text-sm">
@@ -140,31 +157,36 @@ export default function SimulatorPage() {
                     </span>
                     <span className="text-gray-600 font-mono">{l.hash}</span>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           </div>
 
           {/* Network Graph Visualizer */}
-          <div className="lg:col-span-2 flex flex-col h-full">
-            <NetworkGraph transactions={transactions} />
+          <div className="lg:col-span-2 flex flex-col h-full relative">
+            <WithSkeleton 
+              isLoading={isInitializing} 
+              skeleton={<GraphSkeleton />}
+            >
+              <NetworkGraph transactions={transactions} />
+            </WithSkeleton>
           </div>
 
           {/* Live Transaction Stream */}
           <div className="lg:col-span-1 bg-zinc-950 border border-white/10 p-6 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
-            <h3 className="text-sm font-bold border-b border-white/10 pb-4 mb-6 uppercase tracking-widest flex items-center justify-between">
+            <h2 className="text-sm font-bold border-b border-white/10 pb-4 mb-6 uppercase tracking-widest flex items-center justify-between">
               TX Stream
               <span className="text-[10px] text-gray-600 font-normal">
                 Memory [50]
               </span>
-            </h3>
+            </h2>
             <div className="flex-grow overflow-y-auto custom-scrollbar">
-              <table className="w-full text-left text-[11px] border-collapse">
+              <table className="w-full text-left text-[11px] border-collapse" aria-label="Live transaction stream" aria-live="polite">
                 <thead>
                   <tr className="text-gray-600 border-b border-white/5 uppercase tracking-widest">
-                    <th className="pb-3 font-normal">Hash</th>
-                    <th className="pb-3 font-normal">Op</th>
-                    <th className="pb-3 font-normal text-right">Status</th>
+                    <th className="pb-3 font-normal" scope="col">Hash</th>
+                    <th className="pb-3 font-normal" scope="col">Op</th>
+                    <th className="pb-3 font-normal text-right" scope="col">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -172,6 +194,7 @@ export default function SimulatorPage() {
                     <tr
                       key={tx.id}
                       className="group hover:bg-white/5 transition-colors"
+                      aria-label={`Transaction ${tx.id}, operation ${tx.op}, status ${tx.status}`}
                     >
                       <td className="py-3 text-red-500 font-bold tracking-tighter">
                         {tx.id}

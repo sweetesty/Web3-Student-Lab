@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { verifyToken, getStudentById } from './auth.service.js';
+import { NextFunction, Request, Response } from 'express';
+import { setDbRoutingUserId } from '../db/requestContext.js';
+import { getStudentById, verifyToken } from './auth.service.js';
 import { isAccessTokenBlacklisted } from './token.service.js';
 import { User } from './types.js';
 
@@ -57,6 +58,7 @@ export const authenticate = async (
 
     // Attach user to request object
     req.user = user;
+    setDbRoutingUserId(user.id);
 
     next();
   } catch (error) {
@@ -104,6 +106,7 @@ export const optionalAuth = async (
 
     if (user) {
       req.user = user;
+      setDbRoutingUserId(user.id);
     }
 
     next();

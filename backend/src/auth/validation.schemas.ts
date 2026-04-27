@@ -38,7 +38,39 @@ export const loginSchema = z.object({
 });
 
 /**
+ * Web3 Nonce Request Schema
+ * Validates the request body for nonce generation
+ */
+export const web3NonceSchema = z.object({
+  walletAddress: z
+    .string()
+    .min(1, 'Wallet address is required')
+    .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum wallet address format'),
+});
+
+/**
+ * Web3 Verify Request Schema
+ * Validates the request body for signature verification
+ */
+export const web3VerifySchema = z.object({
+  walletAddress: z
+    .string()
+    .min(1, 'Wallet address is required')
+    .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum wallet address format'),
+  signature: z
+    .string()
+    .min(1, 'Signature is required')
+    .regex(/^0x[a-fA-F0-9]{130,132}$/, 'Invalid signature format'),
+  nonce: z
+    .string()
+    .min(1, 'Nonce is required')
+    .min(32, 'Invalid nonce length'),
+});
+
+/**
  * Type inference for validated data
  */
 export type RegisterRequest = z.infer<typeof registerSchema>;
 export type LoginRequest = z.infer<typeof loginSchema>;
+export type Web3NonceRequest = z.infer<typeof web3NonceSchema>;
+export type Web3VerifyRequest = z.infer<typeof web3VerifySchema>;
