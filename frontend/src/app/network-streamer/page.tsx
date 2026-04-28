@@ -1,27 +1,27 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from '@/components/ui/ScrollArea';
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Play, 
-  Pause, 
-  RefreshCw, 
-  Activity, 
-  Users, 
-  ArrowRightLeft,
-  Clock,
-  Zap,
-  Eye,
-  EyeOff,
-  Filter
+import {
+    Activity,
+    ArrowRightLeft,
+    Clock,
+    Eye,
+    EyeOff,
+    Filter,
+    Pause,
+    Play,
+    RefreshCw,
+    Users,
+    Zap
 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // D3 imports will be handled dynamically to avoid SSR issues
 interface Node {
@@ -148,14 +148,14 @@ export default function NetworkLedgerStreamer() {
 
     // Create container groups
     const container = svg.append("g");
-    
+
     // Add zoom behavior
     const zoom = d3.zoom()
       .scaleExtent([0.1, 4])
       .on("zoom", (event) => {
         container.attr("transform", event.transform);
       });
-    
+
     svg.call(zoom);
 
     // Create link elements
@@ -234,7 +234,7 @@ export default function NetworkLedgerStreamer() {
   const startStreaming = useCallback(() => {
     // In a real implementation, this would connect to Horizon Stream API
     // For demo purposes, we'll simulate the stream
-    
+
     if (streamRef.current) {
       streamRef.current.close();
     }
@@ -378,15 +378,15 @@ export default function NetworkLedgerStreamer() {
     }
 
     setNodes(prev => {
-      const filtered = prev.filter(n => 
-        n.data?.timestamp && 
+      const filtered = prev.filter(n =>
+        n.data?.timestamp &&
         (Date.now() - n.data.timestamp.getTime()) < timeWindow[0] * 60 * 1000
       );
       return [...filtered.slice(-100), ...newNodes];
     });
 
     setLinks(prev => {
-      const filtered = prev.filter(l => 
+      const filtered = prev.filter(l =>
         (Date.now() - (new Date().getTime())) < timeWindow[0] * 60 * 1000
       );
       return [...filtered.slice(-200), ...newLinks];
@@ -399,7 +399,7 @@ export default function NetworkLedgerStreamer() {
       ledgersPerSecond: (Math.random() * 0.2).toFixed(3) as any,
       transactionsPerSecond: (Math.random() * 5).toFixed(3) as any,
       totalAccounts: streamData.accounts.length,
-      totalValue: streamData.transactions.reduce((sum, tx) => 
+      totalValue: streamData.transactions.reduce((sum, tx) =>
         sum + parseFloat(tx.operations[0]?.amount || '0'), 0
       )
     });
@@ -596,7 +596,7 @@ export default function NetworkLedgerStreamer() {
                   <Badge variant="secondary">{selectedNode.type}</Badge>
                   <h3 className="font-semibold mt-2">{selectedNode.name}</h3>
                 </div>
-                
+
                 {selectedNode.data && (
                   <div className="space-y-2 text-sm">
                     {selectedNode.data.balance && (
@@ -664,7 +664,7 @@ export default function NetworkLedgerStreamer() {
               <TabsTrigger value="ledgers">Ledgers</TabsTrigger>
               <TabsTrigger value="accounts">Accounts</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="transactions">
               <ScrollArea className="h-48">
                 <div className="space-y-2">
@@ -687,7 +687,7 @@ export default function NetworkLedgerStreamer() {
                 </div>
               </ScrollArea>
             </TabsContent>
-            
+
             <TabsContent value="ledgers">
               <ScrollArea className="h-48">
                 <div className="space-y-2">
@@ -710,7 +710,7 @@ export default function NetworkLedgerStreamer() {
                 </div>
               </ScrollArea>
             </TabsContent>
-            
+
             <TabsContent value="accounts">
               <ScrollArea className="h-48">
                 <div className="space-y-2">
