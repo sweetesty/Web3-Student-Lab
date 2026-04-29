@@ -21,6 +21,7 @@ export default function Navbar() {
     { name: "SIMULATOR", path: "/simulator" },
     { name: "IDEAS", path: "/ideas" },
     { name: "VERIFY", path: "/verify" },
+    { name: "SUBSCRIPTIONS", path: "/subscriptions" },
     { name: "DEVTOOLS", path: "/devtools/events" },
   ];
 

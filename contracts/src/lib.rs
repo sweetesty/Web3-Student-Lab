@@ -18,11 +18,14 @@ pub mod sai_wrapper;
 pub mod session;
 pub mod staking;
 pub mod verification;
+pub mod subscription_service;
+pub mod recurring_payments;
 // Fuzz module uses `std` and legacy Soroban test patterns; keep out of the default test build
 // until it is refreshed for the current SDK (`sequence_number`, token `mint` arity, etc.).
 // #[cfg(test)]
 // pub mod fuzz;
 pub mod token;
+pub mod lending;
 
 use crate::revocation::{CertificateState, CertificateStatus, RevocationReason, RevocationRecord};
 use crate::token::RsTokenContractClient;
