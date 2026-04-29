@@ -174,6 +174,21 @@ const BlogDashboard: React.FC = () => {
                   <span className="text-slate-400 text-sm">Subscriptions</span>
                   <span className="text-purple-400 font-mono font-bold">{userEarnings.subs}</span>
                 </div>
+                
+                {/* Transparency Metric */}
+                <div className="pt-4 border-t border-slate-700/50">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-3">Earnings Breakdown</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-slate-800/60 p-2 rounded-lg">
+                      <p className="text-[10px] text-slate-500">This Week</p>
+                      <p className="text-sm font-bold text-slate-200">+$125.40</p>
+                    </div>
+                    <div className="bg-slate-800/60 p-2 rounded-lg">
+                      <p className="text-[10px] text-slate-500">Projected</p>
+                      <p className="text-sm font-bold text-indigo-400">+$540.00</p>
+                    </div>
+                  </div>
+                </div>
               </div>
               <button className="w-full mt-6 bg-slate-800 hover:bg-slate-700 py-3 rounded-xl font-bold text-sm transition-colors border border-slate-700">
                 View Detailed Analytics

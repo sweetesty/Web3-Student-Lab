@@ -2184,6 +2184,10 @@ impl CertificateContract {
         BloggingPlatform::get_latest_posts(&env)
     }
 
+    pub fn get_posts_range(env: Env, start_id: u64, count: u64) -> Vec<BlogPost> {
+        BloggingPlatform::get_posts_range(&env, start_id, count)
+    }
+
     pub fn add_comment(env: Env, post_id: u64, author: Address, content: String) {
         BloggingPlatform::add_comment(&env, post_id, author, content)
     }
