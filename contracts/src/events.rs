@@ -4,7 +4,7 @@
 //! optimized for gas efficiency and easy parsing by indexers.
 
 use soroban_sdk::{
-    Address, BytesN, Env, Symbol, Vec,
+    Address, BytesN, Env, String, Symbol, Vec,
 };
 
 /// Certificate event types for on-chain activity logging.
@@ -496,8 +496,6 @@ pub fn compute_metadata_hash(
     grade: &Option<String>,
     did: &Option<String>,
 ) -> BytesN<32> {
-    use soroban_sdk::crypto::HasHasher;
-
     let mut hasher = env.crypto().hasher();
 
     hasher.update(course_name.as_bytes());
