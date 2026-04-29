@@ -1,4 +1,17 @@
-import Editor, { OnMount } from "@monaco-editor/react";
+import dynamic from "next/dynamic";
+import type { OnMount } from "@monaco-editor/react";
+
+const Editor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-zinc-950 text-zinc-500">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+        <p className="text-xs uppercase tracking-widest">Initializing Editor...</p>
+      </div>
+    </div>
+  ),
+});
 import React, { useEffect, useRef, useState } from "react";
 import { MonacoBinding } from "y-monaco";
 import { useWebSocketStatus } from "../../lib/collaboration/WebSocketManager";

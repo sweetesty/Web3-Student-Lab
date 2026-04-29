@@ -4,11 +4,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { usePrefetch } from "@/hooks/usePrefetch";
+import { NotificationBell } from "../notifications/NotificationBell";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { handleMouseEnter, handleMouseLeave } = usePrefetch();
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
@@ -67,6 +70,8 @@ export default function Navbar() {
                 key={link.path}
                 href={link.path}
                 role="menuitem"
+                onMouseEnter={() => handleMouseEnter(link.path)}
+                onMouseLeave={handleMouseLeave}
                 aria-current={isActive(link.path) ? "page" : undefined}
                 className={`text-[10px] font-black tracking-[0.2em] transition-colors uppercase ${
                   isActive(link.path)
@@ -84,7 +89,9 @@ export default function Navbar() {
               <div className="flex items-center gap-4">
                 <Link
                   href="/dashboard"
-rent={isActive("/dashboard") ? "page" : undefined}
+                  onMouseEnter={() => handleMouseEnter("/dashboard")}
+                  onMouseLeave={handleMouseLeave}
+                  aria-current={isActive("/dashboard") ? "page" : undefined}
                   className={`text-[10px] font-black tracking-[0.2em] px-4 py-2 border rounded transition-all uppercase ${
                     isActive("/dashboard")
                       ? "bg-red-600 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]"
@@ -95,6 +102,8 @@ rent={isActive("/dashboard") ? "page" : undefined}
                 </Link>
                 <Link
                   href="/certificates"
+                  onMouseEnter={() => handleMouseEnter("/certificates")}
+                  onMouseLeave={handleMouseLeave}
                   aria-current={isActive("/certificates") ? "page" : undefined}
                   className={`text-[10px] font-black tracking-[0.2em] px-4 py-2 border rounded transition-all uppercase ${
                     isActive("/certificates")
