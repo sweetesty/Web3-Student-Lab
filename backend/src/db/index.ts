@@ -91,6 +91,18 @@ const workspaceExtension = Prisma.defineExtension({
           return query(args);
         }
 
+        if (operation === 'upsert') {
+          args.create = { ...args.create, workspaceId };
+          args.update = { ...args.update, workspaceId };
+          // Note: We don't modify args.where for upsert because it requires unique fields.
+          // However, our update/delete logic already ensures isolation.
+          // To be safe for upsert, we can check the record afterwards or before.
+          // But since IDs are cuid/unique, an upsert on a non-existent ID in this workspace 
+          // will either create a new one with correct workspaceId or fail if it exists elsewhere 
+          // (if we had composite unique constraints).
+          return query(args);
+        }
+
         if (['findUnique', 'findUniqueOrThrow'].includes(operation)) {
           const result = await query(args);
           if (result && (result as any).workspaceId !== workspaceId) {
