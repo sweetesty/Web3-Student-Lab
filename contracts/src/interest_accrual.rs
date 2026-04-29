@@ -1,4 +1,4 @@
-use soroban_sdk::{contractimpl, contracttype, contracterror, Address, Env, panic_with_error};
+use soroban_sdk::{contracttype, Address, Env, panic_with_error};
 use crate::savings_wallet::{SavingsAccount, SavingsDataKey, SavingsError};
 
 const SECONDS_PER_YEAR: u64 = 31536000;
@@ -84,7 +84,7 @@ impl InterestAccrualService {
         env.storage().instance().set(&SavingsDataKey::Account(owner.clone()), &account);
 
         env.events().publish(
-            (soroban_sdk::symbol_short!("interest_claimed"),),
+            (soroban_sdk::symbol_short!("int_claim"),),
             (owner.clone(), calculation.interest_earned, account.balance),
         );
 

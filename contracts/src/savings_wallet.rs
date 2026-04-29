@@ -106,7 +106,7 @@ impl SavingsWalletContract {
         env.storage().instance().set(&SavingsDataKey::AccountList, &account_list);
 
         env.events().publish(
-            (soroban_sdk::symbol_short!("savings_created"),),
+            (soroban_sdk::symbol_short!("sav_creat"),),
             (owner.clone(), amount, lock_period, interest_rate),
         );
 
@@ -204,7 +204,7 @@ impl SavingsWalletContract {
         env.storage().instance().set(&SavingsDataKey::Account(owner.clone()), &account);
 
         env.events().publish(
-            (soroban_sdk::symbol_short!("early_withdraw"),),
+            (soroban_sdk::symbol_short!("early_wd"),),
             (owner.clone(), amount, penalty, net_amount),
         );
 
@@ -239,7 +239,7 @@ impl SavingsWalletContract {
         env.storage().instance().set(&SavingsDataKey::EarlyWithdrawalPenalty, &new_rate);
 
         env.events().publish(
-            (soroban_sdk::symbol_short!("penalty_updated"),),
+            (soroban_sdk::symbol_short!("pen_upd"),),
             (caller, new_rate),
         );
     }
