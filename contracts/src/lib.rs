@@ -23,6 +23,9 @@ pub mod verification;
 // #[cfg(test)]
 // pub mod fuzz;
 pub mod token;
+pub mod timestamping;
+pub mod file_notarization;
+
 
 use crate::revocation::{CertificateState, CertificateStatus, RevocationReason, RevocationRecord};
 use crate::token::RsTokenContractClient;
@@ -2163,6 +2166,30 @@ impl CertificateContract {
         );
 
         new_token_id
+    }
+
+    // --- File Notarization System ---
+
+    /// Notarizes a file hash on-chain with a timestamp.
+    /// This provides immutable proof that the file existed at this point in time.
+    pub fn notarize_file(env: Env, owner: Address, hash: BytesN<32>, metadata: String) {
+        file_notarization::NotarizationManager::notarize(&env, owner, hash, metadata);
+    }
+
+    /// Verifies a file hash against the on-chain notarization records.
+    /// Returns the record if found, which includes the timestamp and owner.
+    pub fn verify_file(env: Env, hash: BytesN<32>) -> Option<file_notarization::NotarizationRecord> {
+        file_notarization::NotarizationManager::verify(&env, hash)
+    }
+
+    /// Retrieves all files notarized by a specific address.
+    pub fn get_notarization_history(env: Env, owner: Address) -> Vec<file_notarization::NotarizationRecord> {
+        file_notarization::NotarizationManager::get_history(&env, owner)
+    }
+
+    /// Performs bulk notarization for multiple file hashes in a single transaction.
+    pub fn bulk_notarize_files(env: Env, owner: Address, hashes: Vec<BytesN<32>>, metadata: Vec<String>) {
+        file_notarization::NotarizationManager::bulk_notarize(&env, owner, hashes, metadata);
     }
 }
 
