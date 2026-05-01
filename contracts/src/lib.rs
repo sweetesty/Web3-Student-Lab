@@ -18,6 +18,8 @@ pub mod sai_wrapper;
 pub mod session;
 pub mod staking;
 pub mod verification;
+pub mod sybil_resistance;
+pub mod quadratic_voting;
 // Fuzz module uses `std` and legacy Soroban test patterns; keep out of the default test build
 // until it is refreshed for the current SDK (`sequence_number`, token `mint` arity, etc.).
 // #[cfg(test)]
@@ -25,6 +27,10 @@ pub mod verification;
 pub mod token;
 pub mod job_board;
 pub mod skill_verification;
+pub mod timestamping;
+pub mod file_notarization;
+pub mod reward_points;
+pub mod points_conversion;
 
 use crate::revocation::{CertificateState, CertificateStatus, RevocationReason, RevocationRecord};
 use crate::token::RsTokenContractClient;
@@ -168,6 +174,14 @@ pub enum CertError {
     CertificateInvalid = 23,
     /// Attempted to reissue a non-existent certificate.
     CannotReissueNonExistent = 24,
+    /// Sybil verification failed (duplicate DID or address).
+    SybilVerificationFailed = 25,
+    /// Insufficient governance credits for quadratic voting.
+    InsufficientGovernanceCredits = 26,
+    /// Proposal has expired or is not active.
+    ProposalExpired = 27,
+    /// Proposal has already been executed.
+    ProposalAlreadyExecuted = 28,
 }
 
 const DEFAULT_MINT_CAP: u32 = 1000;
@@ -1265,6 +1279,7 @@ impl CertificateContract {
 
         let issue_date = env.ledger().timestamp();
         let mut issued: Vec<Certificate> = Vec::new(&env);
+        let mut token_ids: Vec<u128> = Vec::new(&env);
 
         // Managers
         let stats_mgr = StatisticsManager::new(&env);
@@ -2165,6 +2180,113 @@ impl CertificateContract {
         );
 
         new_token_id
+    }
+
+    // --- File Notarization System ---
+
+    /// Notarizes a file hash on-chain with a timestamp.
+    /// This provides immutable proof that the file existed at this point in time.
+    pub fn notarize_file(env: Env, owner: Address, hash: BytesN<32>, metadata: String) {
+        file_notarization::NotarizationManager::notarize(&env, owner, hash, metadata);
+    }
+
+    /// Verifies a file hash against the on-chain notarization records.
+    /// Returns the record if found, which includes the timestamp and owner.
+    pub fn verify_file(env: Env, hash: BytesN<32>) -> Option<file_notarization::NotarizationRecord> {
+        file_notarization::NotarizationManager::verify(&env, hash)
+    }
+
+    /// Retrieves all files notarized by a specific address.
+    pub fn get_notarization_history(env: Env, owner: Address) -> Vec<file_notarization::NotarizationRecord> {
+        file_notarization::NotarizationManager::get_history(&env, owner)
+    }
+
+    /// Performs bulk notarization for multiple file hashes in a single transaction.
+    pub fn bulk_notarize_files(env: Env, owner: Address, hashes: Vec<BytesN<32>>, metadata: Vec<String>) {
+        file_notarization::NotarizationManager::bulk_notarize(&env, owner, hashes, metadata);
+    }
+
+    // --- Quadratic Voting and Sybil Resistance ---
+
+    /// Verify a student's identity for sybil-resistant voting.
+    /// Only governance admins can verify students.
+    pub fn verify_student_identity(env: Env, caller: Address, student: Address, did: String) -> bool {
+        caller.require_auth();
+        Self::require_governance_admin(&env, &caller);
+
+        let success = sybil_resistance::verify_identity(&env, student.clone(), did.clone());
+        if !success {
+             panic_with_error!(&env, CertError::SybilVerificationFailed);
+        }
+
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_identity_verified(&student, &did);
+
+        success
+    }
+
+    /// Create a new quadratic voting proposal.
+    /// Creator must be a sybil-verified student.
+    pub fn create_qv_proposal(env: Env, creator: Address, title: String, description: String, duration: u64) -> u64 {
+        creator.require_auth();
+        if !sybil_resistance::is_verified(&env, &creator) {
+            panic_with_error!(&env, CertError::Unauthorized);
+        }
+
+        let id = quadratic_voting::create_proposal(&env, creator.clone(), title.clone(), description.clone(), duration);
+
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_proposal_created(&creator, id, &title);
+
+        id
+    }
+
+    /// Cast a vote on a proposal using quadratic cost calculation.
+    /// cost = votes^2. Credits are deducted from the user's governance balance.
+    pub fn cast_qv_vote(env: Env, user: Address, proposal_id: u64, votes: i128) {
+        user.require_auth();
+
+        let abs_votes = if votes < 0 { -votes } else { votes };
+        let cost = (abs_votes as u128).checked_mul(abs_votes as u128).unwrap_or(u128::MAX);
+
+        if sybil_resistance::get_governance_credits(&env, &user) < cost {
+            panic_with_error!(&env, CertError::InsufficientGovernanceCredits);
+        }
+
+        let success = quadratic_voting::cast_vote(&env, user.clone(), proposal_id, votes);
+        if !success {
+             panic_with_error!(&env, CertError::InvalidProposal);
+        }
+
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_vote_cast(&user, proposal_id, votes, cost);
+    }
+
+    /// Finalize and execute a proposal after its deadline.
+    pub fn execute_qv_proposal(env: Env, proposal_id: u64) {
+        let success = quadratic_voting::execute_proposal(&env, proposal_id);
+        if !success {
+             panic_with_error!(&env, CertError::InvalidProposal);
+        }
+
+        let proposal = quadratic_voting::get_proposal(&env, proposal_id).unwrap();
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_proposal_executed(proposal_id, proposal.status as u32);
+    }
+
+    /// Get current governance credit balance for an address.
+    pub fn get_governance_credits(env: Env, address: Address) -> u128 {
+        sybil_resistance::get_governance_credits(&env, &address)
+    }
+
+    /// Get details for a quadratic voting proposal.
+    pub fn get_qv_proposal(env: Env, id: u64) -> Option<quadratic_voting::QVProposal> {
+        quadratic_voting::get_proposal(&env, id)
+    }
+
+    /// Check if an address is sybil-verified.
+    pub fn is_sybil_verified(env: Env, address: Address) -> bool {
+        sybil_resistance::is_verified(&env, &address)
     }
 }
 
