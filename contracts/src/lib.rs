@@ -8,39 +8,59 @@
 #![no_std]
 
 pub mod admin;
+pub mod distribution_manager;
+pub mod dex_aggregator;
 pub mod enrollment;
 pub mod events;
 pub mod activity_log;
 pub mod statistics;
 pub mod payment_gateway;
+pub mod paymaster;
+pub mod reputation_system;
 pub mod revocation;
+pub mod royalty_splitter;
+pub mod route_optimizer;
+pub mod scoring_algorithm;
+pub mod smart_wallet;
 pub mod sai_wrapper;
 pub mod session;
 pub mod staking;
 pub mod verification;
-
 pub mod payment_scheduler;
-    pub mod execution_engine;
-    pub mod sybil_resistance;
-    pub mod quadratic_voting;
-
->
+pub mod execution_engine;
+pub mod subscription_service;
+pub mod recurring_payments;
+pub mod sybil_resistance;
+pub mod quadratic_voting;
 // Fuzz module uses `std` and legacy Soroban test patterns; keep out of the default test build
 // until it is refreshed for the current SDK (`sequence_number`, token `mint` arity, etc.).
 // #[cfg(test)]
 // pub mod fuzz;
 pub mod token;
+pub mod blogging_platform;
+pub mod content_monetization;
+pub mod carbon_credit_platform;
+pub mod verification_system;
+pub mod job_board;
+pub mod skill_verification;
+pub mod timestamping;
+pub mod file_notarization;
 pub mod reward_points;
 pub mod points_conversion;
 
 use crate::revocation::{CertificateState, CertificateStatus, RevocationReason, RevocationRecord};
 use crate::token::RsTokenContractClient;
 use crate::verification::{CertificateMetadata, VerificationResult};
+use crate::events::EventRecorder;
+use crate::activity_log::{ActivityLogManager, EventType as LogEventType};
 use soroban_sdk::xdr::ToXdr;
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Bytes, BytesN,
     Env, String, Symbol, Vec,
 };
+
+use crate::blogging_platform::{BlogPost, Comment, ReactionType, PostMetrics, BloggingPlatform};
+use crate::content_monetization::{AccessType, Earnings, ContentMonetization};
 
 /// Issued certificate record.
 #[contracttype]
@@ -2183,6 +2203,82 @@ impl CertificateContract {
         new_token_id
     }
 
+    // --- Blogging Platform Functions ---
+
+    pub fn create_post(env: Env, author: Address, title: String, content_hash: BytesN<32>, metadata: String) -> u64 {
+        BloggingPlatform::create_post(&env, author, title, content_hash, metadata)
+    }
+
+    pub fn get_post(env: Env, id: u64) -> Option<BlogPost> {
+        BloggingPlatform::get_post(&env, id)
+    }
+
+    pub fn get_latest_posts(env: Env) -> Vec<BlogPost> {
+        BloggingPlatform::get_latest_posts(&env)
+    }
+
+    pub fn add_comment(env: Env, post_id: u64, author: Address, content: String) {
+        BloggingPlatform::add_comment(&env, post_id, author, content)
+    }
+
+    pub fn react_to_post(env: Env, post_id: u64, reader: Address, reaction: ReactionType) {
+        BloggingPlatform::react_to_post(&env, post_id, reader, reaction)
+    }
+
+    pub fn get_post_metrics(env: Env, post_id: u64) -> PostMetrics {
+        BloggingPlatform::get_post_metrics(&env, post_id)
+    }
+
+    pub fn get_comments(env: Env, post_id: u64) -> Vec<Comment> {
+        BloggingPlatform::get_comments(&env, post_id)
+    }
+
+    // --- Monetization Functions ---
+
+    pub fn set_post_access(env: Env, author: Address, post_id: u64, access_type: AccessType) {
+        ContentMonetization::set_post_access(&env, author, post_id, access_type)
+    }
+
+    pub fn tip_creator(env: Env, reader: Address, creator: Address, token_addr: Address, amount: i128) {
+        ContentMonetization::tip_creator(&env, reader, creator, token_addr, amount)
+    }
+
+    pub fn subscribe_to_creator(env: Env, subscriber: Address, creator: Address, token_addr: Address, amount: i128) {
+        ContentMonetization::subscribe_to_creator(&env, subscriber, creator, token_addr, amount)
+    }
+
+    pub fn get_creator_earnings(env: Env, creator: Address) -> Earnings {
+        ContentMonetization::get_earnings(&env, &creator)
+    }
+
+    pub fn has_access(env: Env, reader: Address, post_id: u64, author: Address) -> bool {
+        ContentMonetization::has_access(&env, &reader, post_id, &author)
+    }
+
+    // --- File Notarization System ---
+
+    /// Notarizes a file hash on-chain with a timestamp.
+    /// This provides immutable proof that the file existed at this point in time.
+    pub fn notarize_file(env: Env, owner: Address, hash: BytesN<32>, metadata: String) {
+        file_notarization::NotarizationManager::notarize(&env, owner, hash, metadata);
+    }
+
+    /// Verifies a file hash against the on-chain notarization records.
+    /// Returns the record if found, which includes the timestamp and owner.
+    pub fn verify_file(env: Env, hash: BytesN<32>) -> Option<file_notarization::NotarizationRecord> {
+        file_notarization::NotarizationManager::verify(&env, hash)
+    }
+
+    /// Retrieves all files notarized by a specific address.
+    pub fn get_notarization_history(env: Env, owner: Address) -> Vec<file_notarization::NotarizationRecord> {
+        file_notarization::NotarizationManager::get_history(&env, owner)
+    }
+
+    /// Performs bulk notarization for multiple file hashes in a single transaction.
+    pub fn bulk_notarize_files(env: Env, owner: Address, hashes: Vec<BytesN<32>>, metadata: Vec<String>) {
+        file_notarization::NotarizationManager::bulk_notarize(&env, owner, hashes, metadata);
+    }
+
     // --- Quadratic Voting and Sybil Resistance ---
 
     /// Verify a student's identity for sybil-resistant voting.
@@ -2190,15 +2286,15 @@ impl CertificateContract {
     pub fn verify_student_identity(env: Env, caller: Address, student: Address, did: String) -> bool {
         caller.require_auth();
         Self::require_governance_admin(&env, &caller);
-        
+
         let success = sybil_resistance::verify_identity(&env, student.clone(), did.clone());
         if !success {
              panic_with_error!(&env, CertError::SybilVerificationFailed);
         }
-        
+
         let recorder = EventRecorder::new(&env, env.current_contract_address());
         recorder.publisher.publish_identity_verified(&student, &did);
-        
+
         success
     }
 
@@ -2209,12 +2305,12 @@ impl CertificateContract {
         if !sybil_resistance::is_verified(&env, &creator) {
             panic_with_error!(&env, CertError::Unauthorized);
         }
-        
+
         let id = quadratic_voting::create_proposal(&env, creator.clone(), title.clone(), description.clone(), duration);
-        
+
         let recorder = EventRecorder::new(&env, env.current_contract_address());
         recorder.publisher.publish_proposal_created(&creator, id, &title);
-        
+
         id
     }
 
@@ -2222,19 +2318,19 @@ impl CertificateContract {
     /// cost = votes^2. Credits are deducted from the user's governance balance.
     pub fn cast_qv_vote(env: Env, user: Address, proposal_id: u64, votes: i128) {
         user.require_auth();
-        
+
         let abs_votes = if votes < 0 { -votes } else { votes };
         let cost = (abs_votes as u128).checked_mul(abs_votes as u128).unwrap_or(u128::MAX);
-        
+
         if sybil_resistance::get_governance_credits(&env, &user) < cost {
             panic_with_error!(&env, CertError::InsufficientGovernanceCredits);
         }
-        
+
         let success = quadratic_voting::cast_vote(&env, user.clone(), proposal_id, votes);
         if !success {
              panic_with_error!(&env, CertError::InvalidProposal);
         }
-        
+
         let recorder = EventRecorder::new(&env, env.current_contract_address());
         recorder.publisher.publish_vote_cast(&user, proposal_id, votes, cost);
     }
@@ -2245,7 +2341,7 @@ impl CertificateContract {
         if !success {
              panic_with_error!(&env, CertError::InvalidProposal);
         }
-        
+
         let proposal = quadratic_voting::get_proposal(&env, proposal_id).unwrap();
         let recorder = EventRecorder::new(&env, env.current_contract_address());
         recorder.publisher.publish_proposal_executed(proposal_id, proposal.status as u32);
@@ -2279,8 +2375,6 @@ fn compute_metadata_hash(
     grade: &Option<String>,
     did: &Option<String>,
 ) -> BytesN<32> {
-    use soroban_sdk::crypto::HasHasher;
-
     let mut hasher = env.crypto().hasher();
 
     hasher.update(course_name.as_bytes());
