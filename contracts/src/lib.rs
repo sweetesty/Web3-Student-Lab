@@ -18,13 +18,20 @@ pub mod sai_wrapper;
 pub mod session;
 pub mod staking;
 pub mod verification;
+
 pub mod payment_scheduler;
-pub mod execution_engine;
+    pub mod execution_engine;
+    pub mod sybil_resistance;
+    pub mod quadratic_voting;
+
+>
 // Fuzz module uses `std` and legacy Soroban test patterns; keep out of the default test build
 // until it is refreshed for the current SDK (`sequence_number`, token `mint` arity, etc.).
 // #[cfg(test)]
 // pub mod fuzz;
 pub mod token;
+pub mod reward_points;
+pub mod points_conversion;
 
 use crate::revocation::{CertificateState, CertificateStatus, RevocationReason, RevocationRecord};
 use crate::token::RsTokenContractClient;
@@ -168,6 +175,14 @@ pub enum CertError {
     CertificateInvalid = 23,
     /// Attempted to reissue a non-existent certificate.
     CannotReissueNonExistent = 24,
+    /// Sybil verification failed (duplicate DID or address).
+    SybilVerificationFailed = 25,
+    /// Insufficient governance credits for quadratic voting.
+    InsufficientGovernanceCredits = 26,
+    /// Proposal has expired or is not active.
+    ProposalExpired = 27,
+    /// Proposal has already been executed.
+    ProposalAlreadyExecuted = 28,
 }
 
 const DEFAULT_MINT_CAP: u32 = 1000;
@@ -274,7 +289,7 @@ impl CertificateContract {
 
     fn governance_admin_index(env: &Env, addr: &Address) -> Option<u32> {
         let admins = Self::governance_admins(env);
-        (0..admins.len()).find(|&i| admins.get(i).unwrap() == *addr)
+        (0..admins.len()).find(|&i| admins.get(i).unwrap() 
     }
 
     fn require_governance_admin(env: &Env, caller: &Address) {
@@ -438,7 +453,7 @@ impl CertificateContract {
 
         let mut already_indexed = false;
         for indexed_symbol in course_symbols.iter() {
-            if indexed_symbol == *course_symbol {
+            if indexed_symbol 
                 already_indexed = true;
                 break;
             }
@@ -470,7 +485,7 @@ impl CertificateContract {
                 .storage()
                 .instance()
                 .get(&DataKey::Role(account))
-                .map(|r: Role| r == role)
+                .map(|r: Role| r 
                 .unwrap_or(false),
         }
     }
@@ -521,7 +536,7 @@ impl CertificateContract {
                 .storage()
                 .instance()
                 .get(&DataKey::Role(account.clone()));
-            if r == Some(Role::Instructor) {
+            if r 
                 panic_with_error!(&env, CertError::CannotRevokeProtectedInstructor);
             }
         }
@@ -710,7 +725,7 @@ impl CertificateContract {
     pub fn upgrade(env: Env, signer_a: Address, signer_b: Address, new_wasm_hash: BytesN<32>) {
         signer_a.require_auth();
         signer_b.require_auth();
-        if signer_a == signer_b {
+        if signer_a 
             panic_with_error!(&env, CertError::Unauthorized);
         }
         Self::require_governance_admin(&env, &signer_a);
@@ -939,7 +954,7 @@ impl CertificateContract {
     pub fn emergency_rollback(env: Env, signer_a: Address, signer_b: Address, target_version: u32) {
         signer_a.require_auth();
         signer_b.require_auth();
-        if signer_a == signer_b {
+        if signer_a 
             panic_with_error!(&env, CertError::Unauthorized);
         }
         Self::require_governance_admin(&env, &signer_a);
@@ -1088,7 +1103,7 @@ impl CertificateContract {
     fn execute_pending_action(env: Env, action: PendingAdminAction) {
         match action {
             PendingAdminAction::SetMintCap(new_cap) => {
-                if new_cap == 0 {
+                if new_cap 
                     panic_with_error!(&env, CertError::InvalidMintCap);
                 }
                 let old_cap: u32 = env
@@ -1245,7 +1260,7 @@ impl CertificateContract {
         let total_certificates = symbols.len();
 
         // Validate batch size
-        if total_certificates == 0 {
+        if total_certificates 
             Self::release_lock(&env);
             panic_with_error!(&env, CertError::EmptyBatch);
         }
@@ -1265,6 +1280,7 @@ impl CertificateContract {
 
         let issue_date = env.ledger().timestamp();
         let mut issued: Vec<Certificate> = Vec::new(&env);
+        let mut token_ids: Vec<u128> = Vec::new(&env);
 
         // Managers
         let stats_mgr = StatisticsManager::new(&env);
@@ -1387,7 +1403,7 @@ impl CertificateContract {
         let batch_size = recipients.len();
 
         // Validate batch constraints
-        if batch_size == 0 {
+        if batch_size 
             Self::release_lock(&env);
             panic_with_error!(&env, CertError::EmptyBatch);
         }
@@ -1875,7 +1891,7 @@ impl CertificateContract {
         );
     }
 
-    /// Enforce a max byte length and reject non-printable ASCII characters (< 0x20 or == 0x7F).
+    /// Enforce a max byte length and reject non-printable ASCII characters (< 0x20 or 
     fn validate_string(env: &Env, s: &String, max_len: u32) {
         if s.len() > max_len {
             panic_with_error!(env, CertError::StringTooLong);
@@ -1886,7 +1902,7 @@ impl CertificateContract {
         // buf is 256 bytes — callers must not pass max_len > 256.
         s.copy_into_slice(&mut buf[..n]);
         for &byte in &buf[..n] {
-            if byte < 0x20 || byte == 0x7F {
+            if byte < 0x20 || byte 
                 panic_with_error!(env, CertError::InvalidCharacter);
             }
         }
@@ -1921,7 +1937,7 @@ impl CertificateContract {
         }
     }
 
-    // ==================== REVOCATION & VERIFICATION FUNCTIONS ====================
+    // 
 
     /// Revoke a certificate with detailed reason tracking and audit trail.
     ///
@@ -2165,6 +2181,89 @@ impl CertificateContract {
         );
 
         new_token_id
+    }
+
+    // --- Quadratic Voting and Sybil Resistance ---
+
+    /// Verify a student's identity for sybil-resistant voting.
+    /// Only governance admins can verify students.
+    pub fn verify_student_identity(env: Env, caller: Address, student: Address, did: String) -> bool {
+        caller.require_auth();
+        Self::require_governance_admin(&env, &caller);
+        
+        let success = sybil_resistance::verify_identity(&env, student.clone(), did.clone());
+        if !success {
+             panic_with_error!(&env, CertError::SybilVerificationFailed);
+        }
+        
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_identity_verified(&student, &did);
+        
+        success
+    }
+
+    /// Create a new quadratic voting proposal.
+    /// Creator must be a sybil-verified student.
+    pub fn create_qv_proposal(env: Env, creator: Address, title: String, description: String, duration: u64) -> u64 {
+        creator.require_auth();
+        if !sybil_resistance::is_verified(&env, &creator) {
+            panic_with_error!(&env, CertError::Unauthorized);
+        }
+        
+        let id = quadratic_voting::create_proposal(&env, creator.clone(), title.clone(), description.clone(), duration);
+        
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_proposal_created(&creator, id, &title);
+        
+        id
+    }
+
+    /// Cast a vote on a proposal using quadratic cost calculation.
+    /// cost = votes^2. Credits are deducted from the user's governance balance.
+    pub fn cast_qv_vote(env: Env, user: Address, proposal_id: u64, votes: i128) {
+        user.require_auth();
+        
+        let abs_votes = if votes < 0 { -votes } else { votes };
+        let cost = (abs_votes as u128).checked_mul(abs_votes as u128).unwrap_or(u128::MAX);
+        
+        if sybil_resistance::get_governance_credits(&env, &user) < cost {
+            panic_with_error!(&env, CertError::InsufficientGovernanceCredits);
+        }
+        
+        let success = quadratic_voting::cast_vote(&env, user.clone(), proposal_id, votes);
+        if !success {
+             panic_with_error!(&env, CertError::InvalidProposal);
+        }
+        
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_vote_cast(&user, proposal_id, votes, cost);
+    }
+
+    /// Finalize and execute a proposal after its deadline.
+    pub fn execute_qv_proposal(env: Env, proposal_id: u64) {
+        let success = quadratic_voting::execute_proposal(&env, proposal_id);
+        if !success {
+             panic_with_error!(&env, CertError::InvalidProposal);
+        }
+        
+        let proposal = quadratic_voting::get_proposal(&env, proposal_id).unwrap();
+        let recorder = EventRecorder::new(&env, env.current_contract_address());
+        recorder.publisher.publish_proposal_executed(proposal_id, proposal.status as u32);
+    }
+
+    /// Get current governance credit balance for an address.
+    pub fn get_governance_credits(env: Env, address: Address) -> u128 {
+        sybil_resistance::get_governance_credits(&env, &address)
+    }
+
+    /// Get details for a quadratic voting proposal.
+    pub fn get_qv_proposal(env: Env, id: u64) -> Option<quadratic_voting::QVProposal> {
+        quadratic_voting::get_proposal(&env, id)
+    }
+
+    /// Check if an address is sybil-verified.
+    pub fn is_sybil_verified(env: Env, address: Address) -> bool {
+        sybil_resistance::is_verified(&env, &address)
     }
 }
 
