@@ -35,6 +35,8 @@ pub mod points_conversion;
 use crate::revocation::{CertificateState, CertificateStatus, RevocationReason, RevocationRecord};
 use crate::token::RsTokenContractClient;
 use crate::verification::{CertificateMetadata, VerificationResult};
+use crate::events::EventRecorder;
+use crate::activity_log::{ActivityLogManager, EventType as LogEventType};
 use soroban_sdk::xdr::ToXdr;
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Bytes, BytesN,
@@ -2302,8 +2304,6 @@ fn compute_metadata_hash(
     grade: &Option<String>,
     did: &Option<String>,
 ) -> BytesN<32> {
-    use soroban_sdk::crypto::HasHasher;
-
     let mut hasher = env.crypto().hasher();
 
     hasher.update(course_name.as_bytes());
