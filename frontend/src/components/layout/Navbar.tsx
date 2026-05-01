@@ -25,6 +25,7 @@ export default function Navbar() {
     { name: t("nav.simulator"), path: "/simulator" },
     { name: t("nav.ideas"), path: "/ideas" },
     { name: t("nav.verify"), path: "/verify" },
+    { name: t("nav.subscriptions"), path: "/subscriptions" },
     { name: t("nav.notarization"), path: "/notarization" },
     { name: t("nav.devtools"), path: "/devtools/events" },
   ];

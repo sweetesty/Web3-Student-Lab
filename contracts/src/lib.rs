@@ -24,6 +24,8 @@ pub mod sai_wrapper;
 pub mod session;
 pub mod staking;
 pub mod verification;
+pub mod subscription_service;
+pub mod recurring_payments;
 pub mod sybil_resistance;
 pub mod quadratic_voting;
 // Fuzz module uses `std` and legacy Soroban test patterns; keep out of the default test build
