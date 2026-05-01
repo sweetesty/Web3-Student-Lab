@@ -25,6 +25,8 @@ pub mod quadratic_voting;
 // #[cfg(test)]
 // pub mod fuzz;
 pub mod token;
+pub mod job_board;
+pub mod skill_verification;
 pub mod timestamping;
 pub mod file_notarization;
 pub mod reward_points;
