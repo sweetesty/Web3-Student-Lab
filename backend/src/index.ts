@@ -77,11 +77,13 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
+import { requireWorkspaceMiddleware } from './middleware/WorkspaceContext.js';
+
 // Cache metrics endpoint
 app.use('/api/v1/cache', cacheMetrics);
 
-// API Routes
-app.use('/api/v1', routes);
+// API Routes - with workspace isolation
+app.use('/api/v1', requireWorkspaceMiddleware, routes);
 
 // Start server only if not in test environment
 let server: ReturnType<typeof httpServer.listen> | null = null;
