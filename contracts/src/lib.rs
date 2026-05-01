@@ -59,6 +59,8 @@ use soroban_sdk::{
 
 use crate::blogging_platform::{BlogPost, Comment, ReactionType, PostMetrics, BloggingPlatform};
 use crate::content_monetization::{AccessType, Earnings, ContentMonetization};
+use crate::job_board::{Job, JobApplication, Milestone, JobBoard};
+use crate::skill_verification::{SkillAttestation, SkillVerification};
 
 /// Issued certificate record.
 #[contracttype]
@@ -2255,6 +2257,47 @@ impl CertificateContract {
 
     pub fn has_access(env: Env, reader: Address, post_id: u64, author: Address) -> bool {
         ContentMonetization::has_access(&env, &reader, post_id, &author)
+    }
+
+    // --- Job Board Functions ---
+
+    pub fn create_job(
+        env: Env, 
+        employer: Address, 
+        title: String, 
+        description: String, 
+        budget: i128, 
+        milestones: Vec<Milestone>,
+        required_skills: Vec<String>,
+        token_addr: Address
+    ) -> u64 {
+        JobBoard::create_job(&env, employer, title, description, budget, milestones, required_skills, token_addr)
+    }
+
+    pub fn apply_for_job(env: Env, applicant: Address, job_id: u64, proposal: String) {
+        JobBoard::apply_for_job(&env, applicant, job_id, proposal)
+    }
+
+    pub fn hire_freelancer(env: Env, employer: Address, job_id: u64, freelancer: Address) {
+        JobBoard::hire_freelancer(&env, employer, job_id, freelancer)
+    }
+
+    pub fn complete_milestone(env: Env, employer: Address, job_id: u64, milestone_idx: u32, token_addr: Address) {
+        JobBoard::complete_milestone(&env, employer, job_id, milestone_idx, token_addr)
+    }
+
+    // --- Skill Verification Functions ---
+
+    pub fn add_verifier(env: Env, admin: Address, verifier: Address) {
+        SkillVerification::add_verifier(&env, admin, verifier)
+    }
+
+    pub fn attest_skill(env: Env, verifier: Address, user: Address, skill_name: String, level: u32) {
+        SkillVerification::attest_skill(&env, verifier, user, skill_name, level)
+    }
+
+    pub fn get_user_skills(env: Env, user: Address) -> Vec<SkillAttestation> {
+        SkillVerification::get_user_skills(&env, user)
     }
 
     // --- File Notarization System ---
