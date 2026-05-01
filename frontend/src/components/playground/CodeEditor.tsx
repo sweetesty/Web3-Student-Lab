@@ -23,11 +23,13 @@ import { cn } from "../../lib/utils";
 interface CodeEditorProps {
   roomName: string;
   mobileMode?: boolean;
+  collaborationProvider?: CollaborationProvider;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
   mobileMode = false,
   roomName,
+  collaborationProvider,
 }) => {
   const [provider] = useState(() => new CollaborationProvider(roomName));
   const [stateManager] = useState(() => new StateManager(provider.doc));
@@ -43,11 +45,13 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     lspClientRef.current.connect();
 
     return () => {
-      provider.destroy();
+      if (shouldDestroyProvider) {
+        provider.destroy();
+      }
       bindingRef.current?.destroy();
       lspClientRef.current?.disconnect();
     };
-  }, [provider]);
+  }, [provider, shouldDestroyProvider]);
 
   const status = useWebSocketStatus(provider);
 
