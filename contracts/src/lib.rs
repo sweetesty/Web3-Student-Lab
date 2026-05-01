@@ -31,6 +31,8 @@ pub mod quadratic_voting;
 // #[cfg(test)]
 // pub mod fuzz;
 pub mod token;
+pub mod carbon_credit_platform;
+pub mod verification_system;
 pub mod job_board;
 pub mod skill_verification;
 pub mod timestamping;
