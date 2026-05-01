@@ -35,6 +35,8 @@ pub mod quadratic_voting;
 // #[cfg(test)]
 // pub mod fuzz;
 pub mod token;
+pub mod blogging_platform;
+pub mod content_monetization;
 pub mod carbon_credit_platform;
 pub mod verification_system;
 pub mod job_board;
@@ -54,6 +56,9 @@ use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Bytes, BytesN,
     Env, String, Symbol, Vec,
 };
+
+use crate::blogging_platform::{BlogPost, Comment, ReactionType, PostMetrics, BloggingPlatform};
+use crate::content_monetization::{AccessType, Earnings, ContentMonetization};
 
 /// Issued certificate record.
 #[contracttype]
@@ -2194,6 +2199,58 @@ impl CertificateContract {
         );
 
         new_token_id
+    }
+
+    // --- Blogging Platform Functions ---
+
+    pub fn create_post(env: Env, author: Address, title: String, content_hash: BytesN<32>, metadata: String) -> u64 {
+        BloggingPlatform::create_post(&env, author, title, content_hash, metadata)
+    }
+
+    pub fn get_post(env: Env, id: u64) -> Option<BlogPost> {
+        BloggingPlatform::get_post(&env, id)
+    }
+
+    pub fn get_latest_posts(env: Env) -> Vec<BlogPost> {
+        BloggingPlatform::get_latest_posts(&env)
+    }
+
+    pub fn add_comment(env: Env, post_id: u64, author: Address, content: String) {
+        BloggingPlatform::add_comment(&env, post_id, author, content)
+    }
+
+    pub fn react_to_post(env: Env, post_id: u64, reader: Address, reaction: ReactionType) {
+        BloggingPlatform::react_to_post(&env, post_id, reader, reaction)
+    }
+
+    pub fn get_post_metrics(env: Env, post_id: u64) -> PostMetrics {
+        BloggingPlatform::get_post_metrics(&env, post_id)
+    }
+
+    pub fn get_comments(env: Env, post_id: u64) -> Vec<Comment> {
+        BloggingPlatform::get_comments(&env, post_id)
+    }
+
+    // --- Monetization Functions ---
+
+    pub fn set_post_access(env: Env, author: Address, post_id: u64, access_type: AccessType) {
+        ContentMonetization::set_post_access(&env, author, post_id, access_type)
+    }
+
+    pub fn tip_creator(env: Env, reader: Address, creator: Address, token_addr: Address, amount: i128) {
+        ContentMonetization::tip_creator(&env, reader, creator, token_addr, amount)
+    }
+
+    pub fn subscribe_to_creator(env: Env, subscriber: Address, creator: Address, token_addr: Address, amount: i128) {
+        ContentMonetization::subscribe_to_creator(&env, subscriber, creator, token_addr, amount)
+    }
+
+    pub fn get_creator_earnings(env: Env, creator: Address) -> Earnings {
+        ContentMonetization::get_earnings(&env, &creator)
+    }
+
+    pub fn has_access(env: Env, reader: Address, post_id: u64, author: Address) -> bool {
+        ContentMonetization::has_access(&env, &reader, post_id, &author)
     }
 
     // --- File Notarization System ---
